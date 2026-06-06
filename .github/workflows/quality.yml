@@ -20,8 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          fetch-depth: 1   # Évite les références distantes superflues
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -33,70 +33,73 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
-      # 1. CODE STYLE (Laravel Pint) – pas de SARIF, simple check
+      # 1. Code style
       - name: Run Laravel Pint
         id: pint
-        run: |
-          vendor/bin/pint --test --ansi
+        run: vendor/bin/pint --test --ansi
         continue-on-error: true
 
       - name: Annotate Pint errors
         if: steps.pint.outcome == 'failure'
-        run: |
-          echo "::error::Code style violations found. Run 'vendor/bin/pint' to fix them."
+        run: echo "::error::Code style violations found. Run 'vendor/bin/pint' to fix them."
 
-      # 2. STATIC ANALYSIS avec PHPStan (supporte SARIF!)
-      - name: Run PHPStan (Larastan)
+      # 2. Static analysis with PHPStan
+      - name: Run PHPStan
+        id: phpstan
         run: |
-          vendor/bin/phpstan analyse --error-format=sarif --memory-limit=1G > phpstan-results.sarif || true
+          mkdir -p reports
+          vendor/bin/phpstan analyse --error-format=sarif --memory-limit=1G > reports/phpstan-results.sarif
+          # Si le fichier est vide, on le supprime pour éviter l'erreur d'upload
+          if [ ! -s reports/phpstan-results.sarif ]; then
+            rm reports/phpstan-results.sarif
+            echo "no_sarif=true" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
 
-      - name: Upload PHPStan SARIF results
+      - name: Upload PHPStan SARIF
+        if: steps.phpstan.outputs.no_sarif != 'true' && (success() || failure())
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: phpstan-results.sarif
+          sarif_file: reports/phpstan-results.sarif
           category: phpstan
 
-      # 3. SECURITY CHECK avec composer audit
+      # 3. Security audit
       - name: Run Composer Security Audit
+        id: audit
         run: |
           if [ -f "composer.lock" ]; then
             composer audit --locked --format=json | tee composer-audit-results.json
           else
-            echo "No composer.lock found, skipping audit."
+            echo "no_lockfile=true" >> $GITHUB_OUTPUT
           fi
         continue-on-error: true
 
       - name: Upload Composer Audit results
         uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.audit.outputs.no_lockfile != 'true'
         with:
           name: composer-audit-results
           path: composer-audit-results.json
           retention-days: 7
 
-      # 4. OPTIONNEL – PHP Insights (métriques)
+      # 4. Optional PHP Insights
       - name: Run PHP Insights
         continue-on-error: true
         run: |
           composer global require nunomaduro/phpinsights
           php ~/.composer/vendor/bin/phpinsights --no-interaction --format=github-action || true
 
-      # 5. POST PR COMMENT (résumé)
+      # 5. PR comment summary
       - name: Post PR Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
-            const summary = [
-              '## 📊 Laravel Quality Check',
-              '',
-              '| Check | Status |',
-              '|-------|--------|',
-              '| **Code Style (Pint)** | ${{ steps.pint.outcome == 'success' && '✅ Pass' || '❌ Fail' }} |',
-              '| **Static Analysis (PHPStan)** | ' + (fs.existsSync('phpstan-results.sarif') ? '✅ Report uploaded' : '⚠️ No report') + ' |',
-              '| **Security Audit** | ' + (fs.existsSync('composer-audit-results.json') ? '✅ Done' : '⚠️ Skipped (no lock file)') + ' |'
-            ].join('\n');
-
+            const fs = require('fs');
+            let pintStatus = '${{ steps.pint.outcome }}' === 'success' ? '✅ Pass' : '❌ Fail';
+            let stanStatus = fs.existsSync('reports/phpstan-results.sarif') ? '✅ SARIF uploaded' : '⚠️ No issues found (or empty)';
+            let auditStatus = fs.existsSync('composer-audit-results.json') ? '✅ Done' : '⚠️ Skipped (no lock file)';
+            const summary = `## 📊 Laravel Quality Check\n\n| Check | Status |\n|-------|--------|\n| **Code Style (Pint)** | ${pintStatus} |\n| **Static Analysis (PHPStan)** | ${stanStatus} |\n| **Security Audit** | ${auditStatus} |`;
             const { data: comments } = await github.rest.issues.listComments({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -104,7 +107,17 @@ jobs:
             });
             const botComment = comments.find(c => c.user.type === 'Bot' && c.body.includes('Laravel Quality Check'));
             if (botComment) {
-              await github.rest.issues.updateComment({ comment_id: botComment.id, body: summary, ...context.repo });
+              await github.rest.issues.updateComment({
+                comment_id: botComment.id,
+                body: summary,
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
             } else {
-              await github.rest.issues.createComment({ issue_number: context.issue.number, body: summary, ...context.repo });
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                body: summary,
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              });
             }
