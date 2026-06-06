@@ -1,0 +1,88 @@
+@startuml
+title "Diagramme de classes conceptuel - Plateforme Agricole"
+
+enum StatutCommande {
+  EN_ATTENTE_VALIDATION
+  VALIDEE
+  EN_LIVRAISON
+  LIVREE
+  TERMINEE
+}
+
+enum ModeLivraison {
+  TRANSPORTEUR
+  AGRICULTEUR
+}
+
+enum StatutLivraison {
+  ASSIGNEE
+  PRISE_EN_CHARGE
+  EN_ROUTE
+  LIVREE
+  PROBLEME
+}
+
+class Consommateur {
+  - id: Identifiant
+  - nom: String
+  - email: String
+  - adresseLivraison: String
+  - telephone: String
+}
+
+class Agriculteur {
+  - id: Identifiant
+  - nom: String
+  - email: String
+  - telephone: String
+  - numeroSIRET: String
+}
+
+class Transporteur {
+  - id: Identifiant
+  - nom: String
+  - email: String
+  - telephone: String
+  - vehicule: String
+}
+
+class Produit {
+  - id: Identifiant
+  - nom: String
+  - description: String
+  - prixUnitaire: Decimal
+  - stock: Integer
+  - unite: String
+}
+
+class Commande {
+  - id: Identifiant
+  - dateCommande: Date
+  - statut: StatutCommande
+  - modeLivraison: ModeLivraison
+}
+
+class LigneCommande {
+  - quantite: Integer
+  - prixUnitaire: Decimal
+}
+
+class Livraison {
+  - id: Identifiant
+  - datePriseEnCharge: Date
+  - dateLivraisonEffective: Date
+  - statut: StatutLivraison
+}
+
+' Associations
+Agriculteur "1" -- "0..*" Produit : publie
+Consommateur "1" -- "0..*" Commande : passe
+Commande "1" -- "1..*" LigneCommande : contient
+LigneCommande "*" -- "1" Produit : concerne
+Commande "1" -- "0..1" Livraison : génère
+Livraison "0..*" -- "0..1" Transporteur : assurée par
+
+' Notes
+note top of Livraison : Si modeLivraison = AGRICULTEUR,\nalors Livraison n'a pas de Transporteur.
+note bottom of Commande : Paiement en espèces à la livraison,\naprès confirmation consommateur.
+@enduml

@@ -1,0 +1,110 @@
+@startuml
+title "Couche Application - Plateforme Agricole (Use Cases & DTOs)"
+
+package "Application" {
+
+  package "Consommateur" {
+    package "DTO" {
+      class PasserCommandeDto {
+        + consommateurId
+        + panier: LigneCommandeDto[]
+        + adresseLivraison
+      }
+      class LigneCommandeDto {
+        + produitId
+        + quantite
+      }
+      class ValiderReceptionDto {
+        + commandeId
+        + estLivree: boolean
+      }
+    }
+    package "UseCase" {
+      class ConsulterCatalogueUseCase {
+        + execute(): List<Produit>
+      }
+      class RechercherProduitUseCase {
+        + execute(keyword): List<Produit>
+      }
+      class PasserCommandeUseCase {
+        + execute(dto: PasserCommandeDto): Commande
+      }
+      class SuivreLivraisonUseCase {
+        + execute(commandeId): Livraison
+      }
+      class ValiderReceptionUseCase {
+        + execute(dto: ValiderReceptionDto): void
+      }
+    }
+  }
+
+  package "Agriculteur" {
+    package "DTO" {
+      class PublierProduitDto {
+        + agriculteurId
+        + nom
+        + description
+        + prix
+        + stock
+        + unite
+      }
+      class ValiderCommandeDto {
+        + commandeId
+        + estDisponible: boolean
+        + modeLivraison: ModeLivraison
+        + transporteurId (optionnel)
+      }
+    }
+    package "UseCase" {
+      class PublierProduitUseCase {
+        + execute(dto: PublierProduitDto): Produit
+      }
+      class ModifierProduitUseCase {
+        + execute(produitId, dto): void
+      }
+      class SupprimerProduitUseCase {
+        + execute(produitId): void
+      }
+      class MettreAJourStockUseCase {
+        + execute(produitId, quantite): void
+      }
+      class ConsulterCommandesRecuesUseCase {
+        + execute(agriculteurId): List<Commande>
+      }
+      class ValiderCommandeUseCase {
+        + execute(dto: ValiderCommandeDto): void
+      }
+    }
+  }
+
+  package "Transporteur" {
+    package "DTO" {
+      class AccepterLivraisonDto {
+        + livraisonId
+        + transporteurId
+      }
+      class MiseAJourStatutDto {
+        + livraisonId
+        + statut: StatutLivraison
+      }
+    }
+    package "UseCase" {
+      class ConsulterLivraisonsDisponiblesUseCase {
+        + execute(): List<Livraison>
+      }
+      class AccepterLivraisonUseCase {
+        + execute(dto: AccepterLivraisonDto): void
+      }
+      class MettreAJourStatutLivraisonUseCase {
+        + execute(dto: MiseAJourStatutDto): void
+      }
+      class ConfirmerLivraisonUseCase {
+        + execute(livraisonId): void
+      }
+      class SignalerProblemeUseCase {
+        + execute(livraisonId, description): void
+      }
+    }
+  }
+}
+@enduml
