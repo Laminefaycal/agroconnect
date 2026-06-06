@@ -1,0 +1,107 @@
+@startuml
+title "Couche Application - Plateforme Agricole (Use Cases & DTOs) - Refactoré UUID"
+
+namespace App\Application\Consommateur\DTO {
+  class PasserCommandeDto {
+    + string $consommateurId
+    + array $panier  // LigneCommandeDto[]
+    + string $adresseLivraison
+  }
+  class LigneCommandeDto {
+    + string $produitId
+    + int $quantite
+  }
+  class ValiderReceptionDto {
+    + string $commandeId
+    + bool $estLivree
+  }
+}
+
+namespace App\Application\Consommateur\UseCase {
+  class ConsulterCatalogueUseCase {
+    + execute(): array
+  }
+  class RechercherProduitUseCase {
+    + execute(string $keyword): array
+  }
+  class PasserCommandeUseCase {
+    + execute(PasserCommandeDto $dto): Commande
+  }
+  class SuivreLivraisonUseCase {
+    + execute(string $commandeId): Livraison
+  }
+  class ValiderReceptionUseCase {
+    + execute(ValiderReceptionDto $dto): void
+  }
+}
+
+namespace App\Application\Agriculteur\DTO {
+  class PublierProduitDto {
+    + string $agriculteurId
+    + string $nom
+    + string $description
+    + float $prix
+    + int $stock
+    + string $unite
+  }
+  class ValiderCommandeDto {
+    + string $commandeId
+    + bool $estDisponible
+    + ModeLivraison $modeLivraison
+    + ?string $transporteurId
+  }
+}
+
+namespace App\Application\Agriculteur\UseCase {
+  class PublierProduitUseCase {
+    + execute(PublierProduitDto $dto): Produit
+  }
+  class ModifierProduitUseCase {
+    + execute(string $produitId, array $data): void
+  }
+  class SupprimerProduitUseCase {
+    + execute(string $produitId): void
+  }
+  class MettreAJourStockUseCase {
+    + execute(string $produitId, int $quantite): void
+  }
+  class ConsulterCommandesRecuesUseCase {
+    + execute(string $agriculteurId): array
+  }
+  class ValiderCommandeUseCase {
+    + execute(ValiderCommandeDto $dto): void
+  }
+}
+
+namespace App\Application\Transporteur\DTO {
+  class AccepterLivraisonDto {
+    + string $livraisonId
+    + string $transporteurId
+  }
+  class MiseAJourStatutDto {
+    + string $livraisonId
+    + StatutLivraison $statut
+  }
+}
+
+namespace App\Application\Transporteur\UseCase {
+  class ConsulterLivraisonsDisponiblesUseCase {
+    + execute(): array
+  }
+  class GetLivraisonDetailsUseCase {
+    + execute(string $livraisonId): Livraison
+  }
+  class AccepterLivraisonUseCase {
+    + execute(AccepterLivraisonDto $dto): void
+  }
+  class MettreAJourStatutLivraisonUseCase {
+    + execute(MiseAJourStatutDto $dto): void
+  }
+  class ConfirmerLivraisonUseCase {
+    + execute(string $livraisonId): void
+  }
+  class SignalerProblemeUseCase {
+    + execute(string $livraisonId, string $description): void
+  }
+}
+@enduml

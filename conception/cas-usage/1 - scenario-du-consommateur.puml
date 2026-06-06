@@ -1,0 +1,36 @@
+@startuml
+title "Cas d'usages - Plateforme Agricole (Consommateur)"
+
+left to right direction
+
+actor Consommateur as consumer <<Utilisateur>>
+node "Service livraison des marchandise" as DeliverySystem <<Service interne>>
+
+rectangle "Achat des produits" {
+  usecase "Consulter le catalogue" as BrowseCatalog
+  usecase "Rechercher un produit" as SearchProduct
+  usecase "Ajouter au panier" as AddToCart
+  usecase "Passer commande" as PlaceOrder
+  usecase "Suivre la livraison" as TrackDelivery
+  usecase "Valider la réception" as ConfirmPaymentOnDelivery
+  usecase "Vérifier la disponibilité produit" as CheckAvailability
+  usecase "Payer en espèces" as PayInCash
+}
+
+consumer --> BrowseCatalog
+consumer --> SearchProduct
+consumer --> AddToCart
+consumer --> PlaceOrder
+consumer --> TrackDelivery
+consumer --> ConfirmPaymentOnDelivery
+
+BrowseCatalog <.. CheckAvailability : <<extend>>
+SearchProduct <.. CheckAvailability : <<extend>>
+PlaceOrder ..> CheckAvailability : <<include>>
+ConfirmPaymentOnDelivery --> DeliverySystem
+TrackDelivery --> DeliverySystem
+ConfirmPaymentOnDelivery <.. PayInCash : <<extend>>
+
+note bottom of CheckAvailability : Vérifie si le produit est en stock
+note right of ConfirmPaymentOnDelivery : Le consommateur valide la livraison\net paye en espèces au transporteur\n(ou à l'agriculteur si livraison directe)
+@enduml

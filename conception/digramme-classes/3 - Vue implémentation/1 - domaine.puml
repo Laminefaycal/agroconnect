@@ -1,0 +1,141 @@
+@startuml
+title "Couche Domaine - Plateforme Agricole (PHP/Laravel) - Refactoré UUID"
+
+namespace App\Domain\Consommateur {
+  class Consommateur {
+    - string $id
+    - string $nom
+    - string $email
+    - string $adresseLivraison
+    - string $telephone
+    + __construct(string $nom, string $email, string $adresse, string $tel)
+    + getId(): string
+    + getNom(): string
+  }
+
+  interface ConsommateurRepositoryInterface {
+    + findById(string $id): ?Consommateur
+    + save(Consommateur $consommateur): void
+  }
+}
+
+namespace App\Domain\Agriculteur {
+  class Agriculteur {
+    - string $id
+    - string $nom
+    - string $email
+    - string $telephone
+    - string $numeroSIRET
+  }
+  interface AgriculteurRepositoryInterface {
+    + findById(string $id): ?Agriculteur
+    + save(Agriculteur $agriculteur): void
+    + findProduitsByAgriculteur(string $id): array
+  }
+}
+
+namespace App\Domain\Transporteur {
+  class Transporteur {
+    - string $id
+    - string $nom
+    - string $email
+    - string $telephone
+    - string $vehicule
+  }
+  interface TransporteurRepositoryInterface {
+    + findById(string $id): ?Transporteur
+    + findAllDisponibles(): array
+  }
+}
+
+namespace App\Domain\Produit {
+  class Produit {
+    - string $id
+    - string $nom
+    - string $description
+    - float $prixUnitaire
+    - int $stock
+    - string $unite
+    + estDisponible(int $quantite): bool
+    + decrementerStock(int $quantite): void
+  }
+  interface ProduitRepositoryInterface {
+    + findById(string $id): ?Produit
+    + findAll(): array
+    + search(string $keyword): array
+    + save(Produit $produit): void
+    + delete(string $id): void
+  }
+}
+
+namespace App\Domain\Commande {
+  enum StatutCommande {
+    EN_ATTENTE_VALIDATION
+    VALIDEE
+    EN_LIVRAISON
+    LIVREE
+    TERMINEE
+  }
+  enum ModeLivraison {
+    TRANSPORTEUR
+    AGRICULTEUR
+  }
+  class Commande {
+    - string $id
+    - DateTime $dateCommande
+    - StatutCommande $statut
+    - ModeLivraison $modeLivraison
+    + valider(): void
+    + choisirModeLivraison(ModeLivraison $mode): void
+    + assignerTransporteur(Transporteur $transporteur): void
+  }
+  class LigneCommande {
+    - int $quantite
+    - float $prixUnitaire
+  }
+  interface CommandeRepositoryInterface {
+    + findById(string $id): ?Commande
+    + findByConsommateur(string $consommateurId): array
+    + findByAgriculteur(string $agriculteurId): array
+    + save(Commande $commande): void
+  }
+  Commande "1" -- "1..*" LigneCommande
+  LigneCommande "*" -- "1" Produit
+}
+
+namespace App\Domain\Livraison {
+  enum StatutLivraison {
+    ASSIGNEE
+    PRISE_EN_CHARGE
+    EN_ROUTE
+    LIVREE
+    PROBLEME
+  }
+  class Livraison {
+    - string $id
+    - ?DateTime $datePriseEnCharge
+    - ?DateTime $dateLivraisonEffective
+    - StatutLivraison $statut
+    + mettreAJourStatut(StatutLivraison $statut): void
+    + confirmerLivraison(): void
+  }
+  interface LivraisonRepositoryInterface {
+    + findById(string $id): ?Livraison
+    + findDisponibles(): array
+    + save(Livraison $livraison): void
+  }
+  Commande "1" -- "0..1" Livraison : génère
+  Livraison "0..*" -- "0..1" Transporteur : assurée par
+}
+
+namespace App\Domain\Services {
+  class ServiceDisponibilite {
+    + verifierStock(Produit $produit, int $quantite): bool
+  }
+  class ServiceLivraison {
+    + proposerAuxTransporteurs(Livraison $livraison): void
+    + affecterTransporteur(Livraison $livraison, Transporteur $transporteur): void
+  }
+  note bottom of ServiceLivraison : Règle métier : si modeLivraison = AGRICULTEUR,\nne pas proposer aux transporteurs.
+}
+@enduml
