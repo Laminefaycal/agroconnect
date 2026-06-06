@@ -1,0 +1,31 @@
+@startuml
+title "Cas d'usages - Plateforme Agricole (Transporteur)"
+
+left to right direction
+
+actor Transporteur as carrier <<Utilisateur>>
+node "Système de géolocalisation" as GeoSystem <<Service externe>>
+
+rectangle "Livraison des produits" {
+  usecase "Consulter les livraisons disponibles" as ViewAvailableDeliveries
+  usecase "Accepter une livraison" as AcceptDelivery
+  usecase "Consulter les détails d'une livraison" as ViewDetails
+  usecase "Mettre à jour le statut (pris en charge, en route)" as UpdateStatus
+  usecase "Confirmer la livraison (remise au consommateur)" as ConfirmDropOff
+  usecase "Signaler un problème" as ReportIssue
+}
+
+carrier --> ViewAvailableDeliveries
+carrier --> AcceptDelivery
+carrier --> UpdateStatus
+carrier --> ConfirmDropOff
+carrier --> ReportIssue
+
+ViewAvailableDeliveries <.. ViewDetails : <<extend>>
+AcceptDelivery ..> ViewDetails : <<include>>
+UpdateStatus --> GeoSystem
+ConfirmDropOff --> GeoSystem
+
+note left of UpdateStatus : Le statut passe de "en cours" à "livré"\nune fois la marchandise remise.
+note top of ConfirmDropOff : Après confirmation par le transporteur,\nle consommateur pourra valider le paiement.
+@enduml

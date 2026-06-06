@@ -1,0 +1,140 @@
+@startuml
+title "Couche Domaine - Plateforme Agricole (DDD)"
+
+package "Domain" {
+
+  package "Consommateur" {
+    class Consommateur {
+      - id: Identifiant
+      - nom: String
+      - email: String
+      - adresseLivraison: String
+      - telephone: String
+    }
+    interface ConsommateurRepositoryInterface {
+      + findById(id): Consommateur
+      + save(consommateur): void
+    }
+  }
+
+  package "Agriculteur" {
+    class Agriculteur {
+      - id: Identifiant
+      - nom: String
+      - email: String
+      - telephone: String
+      - numeroSIRET: String
+    }
+    interface AgriculteurRepositoryInterface {
+      + findById(id): Agriculteur
+      + save(agriculteur): void
+      + findProduitsByAgriculteur(id): List<Produit>
+    }
+  }
+
+  package "Transporteur" {
+    class Transporteur {
+      - id: Identifiant
+      - nom: String
+      - email: String
+      - telephone: String
+      - vehicule: String
+    }
+    interface TransporteurRepositoryInterface {
+      + findById(id): Transporteur
+      + findAllDisponibles(): List<Transporteur>
+    }
+  }
+
+  package "Produit" {
+    class Produit {
+      - id: Identifiant
+      - nom: String
+      - description: String
+      - prixUnitaire: Decimal
+      - stock: Integer
+      - unite: String
+      + estDisponible(quantite): Boolean
+      + decrementerStock(quantite): void
+    }
+    interface ProduitRepositoryInterface {
+      + findById(id): Produit
+      + findAll(): List<Produit>
+      + search(keyword): List<Produit>
+      + save(produit): void
+      + delete(id): void
+    }
+  }
+
+  package "Commande" {
+    enum StatutCommande {
+      EN_ATTENTE_VALIDATION
+      VALIDEE
+      EN_LIVRAISON
+      LIVREE
+      TERMINEE
+    }
+    enum ModeLivraison {
+      TRANSPORTEUR
+      AGRICULTEUR
+    }
+    class Commande {
+      - id: Identifiant
+      - dateCommande: Date
+      - statut: StatutCommande
+      - modeLivraison: ModeLivraison
+      + valider(): void
+      + choisirModeLivraison(mode): void
+      + assignerTransporteur(transporteur): void
+    }
+    class LigneCommande {
+      - quantite: Integer
+      - prixUnitaire: Decimal
+    }
+    interface CommandeRepositoryInterface {
+      + findById(id): Commande
+      + findByConsommateur(consommateurId): List<Commande>
+      + findByAgriculteur(agriculteurId): List<Commande>
+      + save(commande): void
+    }
+    Commande "1" -- "1..*" LigneCommande
+    LigneCommande "*" -- "1" Produit
+  }
+
+  package "Livraison" {
+    enum StatutLivraison {
+      ASSIGNEE
+      PRISE_EN_CHARGE
+      EN_ROUTE
+      LIVREE
+      PROBLEME
+    }
+    class Livraison {
+      - id: Identifiant
+      - datePriseEnCharge: Date
+      - dateLivraisonEffective: Date
+      - statut: StatutLivraison
+      + mettreAJourStatut(statut): void
+      + confirmerLivraison(): void
+    }
+    interface LivraisonRepositoryInterface {
+      + findById(id): Livraison
+      + findDisponibles(): List<Livraison>
+      + save(livraison): void
+    }
+    Commande "1" -- "0..1" Livraison : génère
+    Livraison "0..*" -- "0..1" Transporteur : assurée par
+  }
+
+  package "Services Domaine" {
+    class ServiceDisponibilite {
+      + verifierStock(produit, quantite): Boolean
+    }
+    class ServiceLivraison {
+      + proposerAuxTransporteurs(livraison): void
+      + affecterTransporteur(livraison, transporteur): void
+    }
+  }
+}
+note bottom of ServiceLivraison : Règle métier : si modeLivraison = AGRICULTEUR,\nne pas proposer aux transporteurs.
+@enduml

@@ -1,0 +1,148 @@
+@startuml
+title "Couche Infrastructure - Plateforme Agricole (Laravel/Eloquent) - Refactoré UUID"
+
+namespace App\Infrastructure\Http\Controllers {
+  class ConsommateurController {
+    + consulterCatalogue(Request $req): JsonResponse
+    + rechercherProduit(Request $req): JsonResponse
+    + passerCommande(Request $req): JsonResponse
+    + suivreLivraison(Request $req): JsonResponse
+    + validerReception(Request $req): JsonResponse
+  }
+  class AgriculteurController {
+    + publierProduit(Request $req): JsonResponse
+    + modifierProduit(Request $req): JsonResponse
+    + supprimerProduit(Request $req): JsonResponse
+    + mettreAJourStock(Request $req): JsonResponse
+    + consulterCommandes(Request $req): JsonResponse
+    + validerCommande(Request $req): JsonResponse
+  }
+  class TransporteurController {
+    + consulterLivraisonsDisponibles(Request $req): JsonResponse
+    + getLivraisonDetails(Request $req): JsonResponse
+    + accepterLivraison(Request $req): JsonResponse
+    + mettreAJourStatut(Request $req): JsonResponse
+    + confirmerLivraison(Request $req): JsonResponse
+    + signalerProbleme(Request $req): JsonResponse
+  }
+}
+
+namespace App\Infrastructure\Persistence\Eloquent\Models {
+  class ConsommateurModel extends Model {
+    - string $table = "consommateurs"
+    - bool $incrementing = false
+    - string $keyType = "string"
+    - array $fillable = ["id","nom","email","adresse_livraison","telephone"]
+    - array $casts = ["id" => "string"]
+    + commandes(): HasMany
+  }
+  class AgriculteurModel extends Model {
+    - string $table = "agriculteurs"
+    - bool $incrementing = false
+    - string $keyType = "string"
+    - array $fillable = ["id","nom","email","telephone","numero_siret"]
+    - array $casts = ["id" => "string"]
+    + produits(): HasMany
+  }
+  class TransporteurModel extends Model {
+    - string $table = "transporteurs"
+    - bool $incrementing = false
+    - string $keyType = "string"
+    - array $fillable = ["id","nom","email","telephone","vehicule"]
+    - array $casts = ["id" => "string"]
+    + livraisons(): HasMany
+  }
+  class ProduitModel extends Model {
+    - string $table = "produits"
+    - bool $incrementing = false
+    - string $keyType = "string"
+    - array $fillable = ["id","agriculteur_id","nom","description","prix_unitaire","stock","unite"]
+    - array $casts = ["id" => "string", "prix_unitaire" => "decimal:2"]
+    + agriculteur(): BelongsTo
+    + estDisponible(int $quantite): bool
+    + decrementerStock(int $quantite): void
+  }
+  class CommandeModel extends Model {
+    - string $table = "commandes"
+    - bool $incrementing = false
+    - string $keyType = "string"
+    - array $fillable = ["id","consommateur_id","date_commande","statut","mode_livraison"]
+    - array $casts = ["id" => "string", "statut" => StatutCommandeEnum::class, "mode_livraison" => ModeLivraisonEnum::class, "date_commande" => "datetime"]
+    + consommateur(): BelongsTo
+    + lignes(): HasMany
+    + livraison(): HasOne
+    + valider(): void
+    + choisirModeLivraison(ModeLivraisonEnum $mode): void
+    + assignerTransporteur(string $transporteurId): void
+  }
+  class LigneCommandeModel extends Model {
+    - string $table = "lignes_commande"
+    - bool $incrementing = true   // Les lignes peuvent garder un auto-incrément si nécessaire
+    - array $fillable = ["commande_id","produit_id","quantite","prix_unitaire"]
+    - array $casts = ["prix_unitaire" => "decimal:2"]
+    + commande(): BelongsTo
+    + produit(): BelongsTo
+  }
+  class LivraisonModel extends Model {
+    - string $table = "livraisons"
+    - bool $incrementing = false
+    - string $keyType = "string"
+    - array $fillable = ["id","commande_id","transporteur_id","date_prise_en_charge","date_livraison_effective","statut"]
+    - array $casts = ["id" => "string", "statut" => StatutLivraisonEnum::class, "date_prise_en_charge" => "datetime", "date_livraison_effective" => "datetime"]
+    + commande(): BelongsTo
+    + transporteur(): BelongsTo
+    + mettreAJourStatut(StatutLivraisonEnum $statut): void
+    + confirmerLivraison(): void
+  }
+}
+
+namespace App\Infrastructure\Persistence\Repository {
+  class ProduitRepository implements ProduitRepositoryInterface {
+    + findById(string $id): ?ProduitModel
+    + findAll(): Collection
+    + search(string $keyword): Collection
+    + save(ProduitModel $produit): bool
+    + delete(string $id): bool
+  }
+  class CommandeRepository implements CommandeRepositoryInterface {
+    + findById(string $id): ?CommandeModel
+    + findByConsommateur(string $consommateurId): Collection
+    + findByAgriculteur(string $agriculteurId): Collection
+    + save(CommandeModel $commande): bool
+  }
+  class LivraisonRepository implements LivraisonRepositoryInterface {
+    + findById(string $id): ?LivraisonModel
+    + findDisponibles(): Collection
+    + save(LivraisonModel $livraison): bool
+  }
+}
+
+namespace App\Infrastructure\Providers {
+  class AgriPlateformeServiceProvider {
+    + register(): void
+    + boot(): void
+  }
+  note top : Lie les interfaces de repository\nà leurs implémentations concrètes.
+}
+
+' Relations entre classes de l'infrastructure
+ConsommateurController ..> PasserCommandeUseCase
+AgriculteurController ..> PublierProduitUseCase
+TransporteurController ..> ConsulterLivraisonsDisponiblesUseCase
+TransporteurController ..> GetLivraisonDetailsUseCase
+
+ProduitRepository ..|> ProduitRepositoryInterface
+CommandeRepository ..|> CommandeRepositoryInterface
+LivraisonRepository ..|> LivraisonRepositoryInterface
+
+ProduitRepository --> ProduitModel
+CommandeRepository --> CommandeModel
+LivraisonRepository --> LivraisonModel
+
+ConsommateurModel "1" -- "0..*" CommandeModel : commandes
+AgriculteurModel "1" -- "0..*" ProduitModel : produits
+CommandeModel "1" -- "1..*" LigneCommandeModel : lignes
+LigneCommandeModel "*" -- "1" ProduitModel
+CommandeModel "1" -- "0..1" LivraisonModel : livraison
+TransporteurModel "1" -- "0..*" LivraisonModel : livraisons
+@enduml
