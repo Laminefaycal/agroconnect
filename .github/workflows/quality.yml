@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
-          fetch-depth: 1   # Évite les références distantes superflues
+          fetch-depth: 1
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -48,16 +48,19 @@ jobs:
         id: phpstan
         run: |
           mkdir -p reports
-          vendor/bin/phpstan analyse --error-format=sarif --memory-limit=1G > reports/phpstan-results.sarif
-          # Si le fichier est vide, on le supprime pour éviter l'erreur d'upload
-          if [ ! -s reports/phpstan-results.sarif ]; then
-            rm reports/phpstan-results.sarif
-            echo "no_sarif=true" >> $GITHUB_OUTPUT
+          # Exécuter PHPStan et capturer la sortie SARIF
+          vendor/bin/phpstan analyse --error-format=sarif --memory-limit=1G > reports/phpstan-results.sarif || true
+          # Vérifier si le fichier est un JSON valide (non vide et commence par {)
+          if [ -s reports/phpstan-results.sarif ] && jq empty reports/phpstan-results.sarif 2>/dev/null; then
+            echo "sarif_valid=true" >> $GITHUB_OUTPUT
+          else
+            echo "sarif_valid=false" >> $GITHUB_OUTPUT
+            rm -f reports/phpstan-results.sarif
           fi
         continue-on-error: true
 
       - name: Upload PHPStan SARIF
-        if: steps.phpstan.outputs.no_sarif != 'true' && (success() || failure())
+        if: steps.phpstan.outputs.sarif_valid == 'true'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: reports/phpstan-results.sarif
@@ -69,14 +72,15 @@ jobs:
         run: |
           if [ -f "composer.lock" ]; then
             composer audit --locked --format=json | tee composer-audit-results.json
+            echo "audit_done=true" >> $GITHUB_OUTPUT
           else
-            echo "no_lockfile=true" >> $GITHUB_OUTPUT
+            echo "audit_done=false" >> $GITHUB_OUTPUT
           fi
         continue-on-error: true
 
       - name: Upload Composer Audit results
         uses: actions/upload-artifact@v4
-        if: always() && steps.audit.outputs.no_lockfile != 'true'
+        if: steps.audit.outputs.audit_done == 'true'
         with:
           name: composer-audit-results
           path: composer-audit-results.json
@@ -97,8 +101,8 @@ jobs:
           script: |
             const fs = require('fs');
             let pintStatus = '${{ steps.pint.outcome }}' === 'success' ? '✅ Pass' : '❌ Fail';
-            let stanStatus = fs.existsSync('reports/phpstan-results.sarif') ? '✅ SARIF uploaded' : '⚠️ No issues found (or empty)';
-            let auditStatus = fs.existsSync('composer-audit-results.json') ? '✅ Done' : '⚠️ Skipped (no lock file)';
+            let stanStatus = '${{ steps.phpstan.outputs.sarif_valid }}' === 'true' ? '✅ SARIF uploaded' : '⚠️ No issues (or empty report)';
+            let auditStatus = '${{ steps.audit.outputs.audit_done }}' === 'true' ? '✅ Done' : '⚠️ No lock file';
             const summary = `## 📊 Laravel Quality Check\n\n| Check | Status |\n|-------|--------|\n| **Code Style (Pint)** | ${pintStatus} |\n| **Static Analysis (PHPStan)** | ${stanStatus} |\n| **Security Audit** | ${auditStatus} |`;
             const { data: comments } = await github.rest.issues.listComments({
               issue_number: context.issue.number,
