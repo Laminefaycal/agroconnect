@@ -86,14 +86,6 @@ jobs:
           path: composer-audit-results.json
           retention-days: 7
 
-#      # 4. Optional PHP Insights
-#      - name: Run PHP Insights
-#        continue-on-error: true
-#        run: |
-#          composer global require nunomaduro/phpinsights
-#          php ~/.composer/vendor/bin/phpinsights --no-interaction --format=github-action || true
-
-      # 5. PR comment summary
       - name: Post PR Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -101,7 +93,7 @@ jobs:
           script: |
             const fs = require('fs');
             let pintStatus = '${{ steps.pint.outcome }}' === 'success' ? '✅ Pass' : '❌ Fail';
-            let stanStatus = '${{ steps.phpstan.outputs.sarif_valid }}' === 'true' ? '✅ SARIF uploaded' : '⚠️ No issues (or empty report)';
+            let stanStatus = '${{ steps.phpstan.outputs.sarif_valid }}' === 'true' ? '✅ SARIF uploaded' : '⚠️ No issues (empty report)';
             let auditStatus = '${{ steps.audit.outputs.audit_done }}' === 'true' ? '✅ Done' : '⚠️ No lock file';
             const summary = `## 📊 Laravel Quality Check\n\n| Check | Status |\n|-------|--------|\n| **Code Style (Pint)** | ${pintStatus} |\n| **Static Analysis (PHPStan)** | ${stanStatus} |\n| **Security Audit** | ${auditStatus} |`;
             const { data: comments } = await github.rest.issues.listComments({
