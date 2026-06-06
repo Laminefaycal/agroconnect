@@ -1,0 +1,109 @@
+name: Laravel Code Quality
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+      - develop
+      - master
+      - recette
+
+jobs:
+  laravel-quality:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # Nécessaire pour pousser les correctifs de style
+      pull-requests: write # Nécessaire pour commenter les PRs
+      checks: write        # Nécessaire pour les annotations
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+          extensions: mbstring, xml, ctype, json, bcmath, pdo_sqlite, tokenizer
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      # 1. CODE STYLE
+      - name: Run Laravel Pint (Code Style)
+        run: vendor/bin/pint --test --format=sarif > pint-results.sarif || true
+        continue-on-error: true
+
+      - name: Upload Pint SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: pint-results.sarif
+          category: laravel-pint
+
+      # 2. STATIC ANALYSIS
+      - name: Run Larastan (Static Analysis)
+        run: vendor/bin/phpstan analyse --error-format=github --memory-limit=1G
+        continue-on-error: true
+
+      # 3. SECURITY CHECK (Équivalent du scanner de vulnérabilités de Qodana)
+      - name: Run Composer Security Check
+        run: composer audit --locked --format=json > composer-audit-results.json || true
+        continue-on-error: true
+
+      - name: Upload Composer Audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: composer-audit-results
+          path: composer-audit-results.json
+
+      # 4. ADDITIONAL QUALITY METRICS
+      - name: Run PHP Insights (Code Quality Metrics)
+        run: |
+          composer global require nunomaduro/phpinsights
+          php ~/.composer/vendor/bin/phpinsights --no-interaction --format=github-action
+
+      # 5. POST PR COMMENT (Équivalent du "post-pr-comment" de Qodana)
+      - name: Post PR Comment with Summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 📊 Laravel Quality Check Summary\n\n';
+
+            if (fs.existsSync('pint-results.sarif')) {
+              comment += '✅ **Code Style (Pint)**: Checked\n';
+            }
+
+            // Add more metrics as needed
+
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('Laravel Quality Check Summary')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                comment_id: botComment.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            }
