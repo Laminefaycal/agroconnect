@@ -86,12 +86,12 @@ jobs:
           path: composer-audit-results.json
           retention-days: 7
 
-      # 4. Optional PHP Insights
-      - name: Run PHP Insights
-        continue-on-error: true
-        run: |
-          composer global require nunomaduro/phpinsights
-          php ~/.composer/vendor/bin/phpinsights --no-interaction --format=github-action || true
+#      # 4. Optional PHP Insights
+#      - name: Run PHP Insights
+#        continue-on-error: true
+#        run: |
+#          composer global require nunomaduro/phpinsights
+#          php ~/.composer/vendor/bin/phpinsights --no-interaction --format=github-action || true
 
       # 5. PR comment summary
       - name: Post PR Comment
