@@ -69,3 +69,51 @@ Les fichiers `.puml` sont au format **PlantUML**. Pour les visualiser :
 
 Ce dossier de conception doit rester synchronisé avec le code.  
 À chaque modification architecturale majeure, mettez à jour les fichiers `.puml` correspondants et le fichier `info.txt` associé.
+
+
+
+# Intégration de la qualité du code (PHP / Laravel)
+
+Ce document vous guide pour intégrer des outils de contrôle qualité dans votre projet Laravel via GitHub Actions, en remplacement d’un outil comme Qodana.
+
+## 📦 Outils utilisés
+
+| Outil | Rôle |
+|-------|------|
+| **Laravel Pint** | Vérification et correction automatique du style de code (PSR-12 / conventions Laravel) |
+| **PHPStan / Larastan** | Analyse statique pour détecter les bugs potentiels, types manquants, erreurs logiques |
+| **Composer Audit** | Vérification des vulnérabilités dans les dépendances |
+| **PHP Insights** (optionnel) | Métriques de qualité, complexité, architecture |
+
+## ✅ Prérequis
+
+- Projet Laravel 13+
+- PHP 8.5+
+- Composer
+- Dépôt GitHub (public ou privé)
+
+## 🔧 Installation des outils
+
+Exécutez les commandes suivantes dans votre projet :
+
+```bash
+# Installer Laravel Pint (souvent déjà présent)
+composer require --dev laravel/pint
+
+# Installer Larastan (wrapper PHPStan pour Laravel)
+composer require --dev larastan/larastan
+
+# (Optionnel) PHP Insights
+composer require --dev nunomaduro/phpinsights
+```
+
+Créez un fichier phpstan.neon à la racine :
+```yml
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+    level: 5   # Niveau de rigueur (0=le plus faible, 9=le plus strict)
+```
