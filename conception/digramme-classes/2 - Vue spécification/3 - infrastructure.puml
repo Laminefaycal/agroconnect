@@ -1,0 +1,56 @@
+@startuml
+title "Couche Infrastructure - Plateforme Agricole (Controllers)"
+
+package "Infrastructure" {
+
+  package "Http/Controllers" {
+
+    class ConsommateurController {
+      + consulterCatalogue(Request req): Response
+      + rechercherProduit(Request req): Response
+      + passerCommande(Request req): Response
+      + suivreLivraison(Request req): Response
+      + validerReception(Request req): Response
+    }
+
+    class AgriculteurController {
+      + publierProduit(Request req): Response
+      + modifierProduit(Request req): Response
+      + supprimerProduit(Request req): Response
+      + mettreAJourStock(Request req): Response
+      + consulterCommandes(Request req): Response
+      + validerCommande(Request req): Response
+    }
+
+
+    class TransporteurController {
+      + consulterLivraisonsDisponibles(Request req): Response
+      + accepterLivraison(Request req): Response
+      + mettreAJourStatut(Request req): Response
+      + confirmerLivraison(Request req): Response
+      + signalerProbleme(Request req): Response
+    }
+
+  }
+
+  package "Persistence/Repository" {
+    class ProduitRepository implements ProduitRepositoryInterface
+    class CommandeRepository implements CommandeRepositoryInterface
+    class LivraisonRepository implements LivraisonRepositoryInterface
+    note bottom of ProduitRepository : Implémentation concrète\n(Eloquent, Doctrine, etc.)
+  }
+
+  package "Providers" {
+    class AgriPlateformeServiceProvider {
+      + register(): void
+      + boot(): void
+    }
+    note top : Lie les interfaces de repository\nà leurs implémentations.
+  }
+}
+
+ConsommateurController ..> ConsulterCatalogueUseCase : dépend
+AgriculteurController ..> PublierProduitUseCase : dépend
+TransporteurController ..> ConsulterLivraisonsDisponiblesUseCase : dépend
+
+@enduml

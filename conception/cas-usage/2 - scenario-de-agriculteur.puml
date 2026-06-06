@@ -1,0 +1,38 @@
+@startuml
+title "Cas d'usages - Plateforme Agricole (Agriculteur)"
+
+left to right direction
+
+actor Agriculteur as farmer <<Utilisateur>>
+node "Service transport des marchandise" as CarrierService <<Système interne>>
+
+rectangle "Gestion des ventes et livraisons" {
+  usecase "Publier un produit" as PublishProduct
+  usecase "Modifier un produit" as EditProduct
+  usecase "Supprimer un produit" as DeleteProduct
+  usecase "Mettre à jour le stock" as UpdateStock
+  usecase "Consulter les commandes reçues" as ViewOrders
+  usecase "Valider une commande (disponibilité)" as ValidateOrder
+  usecase "Choisir le mode de livraison" as ChooseDeliveryMode
+  usecase "Assigner un transporteur" as AssignCarrier
+  usecase "Livrer soi-même" as SelfDelivery
+  usecase "Vérifier la disponibilité produit" as CheckAvailability
+}
+
+farmer --> PublishProduct
+farmer --> EditProduct
+farmer --> DeleteProduct
+farmer --> UpdateStock
+farmer --> ViewOrders
+farmer --> ValidateOrder
+farmer --> ChooseDeliveryMode
+
+ValidateOrder ..> ChooseDeliveryMode : <<include>>
+ValidateOrder ..> CheckAvailability : <<include>>
+ChooseDeliveryMode <.. AssignCarrier : <<extend>>
+ChooseDeliveryMode <.. SelfDelivery : <<extend>>
+AssignCarrier --> CarrierService
+
+note bottom of CheckAvailability : L'agriculteur vérifie que le produit\n est disponible avant de valider
+note right of ChooseDeliveryMode : Si l'agriculteur choisit un transporteur,\nalors la commande est proposée aux transporteurs.\nSinon, il livre lui-même.
+@enduml
