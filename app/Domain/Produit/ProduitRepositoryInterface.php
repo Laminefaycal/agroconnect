@@ -7,15 +7,13 @@ namespace App\Domain\Produit;
  *
  * Spécifie le contrat de persistance pour le catalogue de produits agricoles.
  * Assure le découplage entre la logique d'inventaire du Domaine et les requêtes en base de données.
- *
- * @package App\Domain\Produit
  */
 interface ProduitRepositoryInterface
 {
     /**
      * Recherche un produit spécifique par son identifiant unique.
      *
-     * @param string $id L'identifiant du produit.
+     * @param  string  $id  L'identifiant du produit.
      * @return Produit|null L'entité Produit correspondante, ou null si elle n'existe pas.
      */
     public function findById(string $id): ?Produit;
@@ -30,7 +28,7 @@ interface ProduitRepositoryInterface
     /**
      * Filtre et recherche les produits par mots-clés (ex: nom, catégorie ou description).
      *
-     * @param string $keyword Le mot-clé saisi par l'utilisateur.
+     * @param  string  $keyword  Le mot-clé saisi par l'utilisateur.
      * @return array La liste des entités Produit correspondantes.
      */
     public function search(string $keyword): array;
@@ -38,16 +36,14 @@ interface ProduitRepositoryInterface
     /**
      * Sauvegarde un nouveau produit ou met à jour les informations d'un produit existant.
      *
-     * @param Produit $produit L'entité Produit à persister.
-     * @return void
+     * @param  Produit  $produit  L'entité Produit à persister.
      */
     public function save(Produit $produit): void;
 
     /**
      * Supprime définitivement un produit du catalogue à partir de son identifiant.
      *
-     * @param string $id L'identifiant du produit à retirer.
-     * @return void
+     * @param  string  $id  L'identifiant du produit à retirer.
      */
     public function delete(string $id): void;
 }

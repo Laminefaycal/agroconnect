@@ -7,8 +7,6 @@ namespace App\Domain\Livraison;
  *
  * Centralise les différents états possibles d'un colis ou d'une course logistique
  * sur la plateforme AgroConnect au Gabon.
- *
- * @package App\Domain\Livraison
  */
 enum StatutLivraison: string
 {

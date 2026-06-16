@@ -8,19 +8,17 @@ namespace App\Domain\Consommateur;
  * Représente un client ou acheteur final sur la plateforme AgroConnect.
  * Cette entité gère les informations de profil et les coordonnées nécessaires
  * pour passer des commandes et organiser la livraison.
- *
- * @package App\Domain\Consommateur
  */
 class Consommateur
 {
     /**
      * Constructeur de l'entité Consommateur avec promotion de propriétés.
      *
-     * @param string $id L'identifiant unique du consommateur.
-     * @param string $nom Le nom complet du consommateur.
-     * @param string $email L'adresse e-mail de contact.
-     * @param string $adresseLivraison L'adresse physique principale pour les livraisons.
-     * @param string $telephone Le numéro de téléphone de contact (ex: +241...).
+     * @param  string  $id  L'identifiant unique du consommateur.
+     * @param  string  $nom  Le nom complet du consommateur.
+     * @param  string  $email  L'adresse e-mail de contact.
+     * @param  string  $adresseLivraison  L'adresse physique principale pour les livraisons.
+     * @param  string  $telephone  Le numéro de téléphone de contact (ex: +241...).
      */
     public function __construct(
         private string $id,
@@ -32,8 +30,6 @@ class Consommateur
 
     /**
      * Récupère l'identifiant unique du consommateur.
-     *
-     * @return string
      */
     public function getId(): string
     {
@@ -42,8 +38,6 @@ class Consommateur
 
     /**
      * Récupère le nom complet du consommateur.
-     *
-     * @return string
      */
     public function getNom(): string
     {
@@ -52,8 +46,6 @@ class Consommateur
 
     /**
      * Récupère l'adresse e-mail du consommateur.
-     *
-     * @return string
      */
     public function getEmail(): string
     {
@@ -62,8 +54,6 @@ class Consommateur
 
     /**
      * Récupère l'adresse de livraison par défaut.
-     *
-     * @return string
      */
     public function getAdresseLivraison(): string
     {
@@ -72,8 +62,6 @@ class Consommateur
 
     /**
      * Récupère le numéro de téléphone du consommateur.
-     *
-     * @return string
      */
     public function getTelephone(): string
     {

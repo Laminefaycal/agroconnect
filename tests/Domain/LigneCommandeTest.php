@@ -1,9 +1,9 @@
 <?php
 
-namespace Tests\Unit\Domain;
+namespace Tests\Domain;
 
-use PHPUnit\Framework\TestCase;
 use App\Domain\Commande\LigneCommande;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Class LigneCommandeTest
@@ -15,8 +15,6 @@ class LigneCommandeTest extends TestCase
 {
     /**
      * Vérifie que le sous-total d'une ligne de commande est correctement calculé.
-     *
-     * @return void
      */
     public function test_le_calcul_du_sous_total_est_correct(): void
     {

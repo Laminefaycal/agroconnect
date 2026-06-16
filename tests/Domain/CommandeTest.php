@@ -1,12 +1,12 @@
 <?php
 
-namespace Tests\Unit\Domain;
+namespace Tests\Domain;
 
-use PHPUnit\Framework\TestCase;
 use App\Domain\Commande\Commande;
-use App\Domain\Commande\StatutCommande;
 use App\Domain\Commande\ModelLivraison;
+use App\Domain\Commande\StatutCommande;
 use DateTime;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Class CommandeTest
@@ -18,15 +18,13 @@ class CommandeTest extends TestCase
 {
     /**
      * Vérifie qu'une commande change correctement de statut lorsqu'elle est validée.
-     *
-     * @return void
      */
     public function test_une_commande_peut_etre_validee(): void
     {
         // 1. ARRANGE (Préparation d'une commande en attente)
         $commande = new Commande(
             'cmd-456',
-            new DateTime(),
+            new DateTime,
             StatutCommande::EN_ATTENTE_VALIDATION,
             ModelLivraison::TRANSPORTEUR
         );

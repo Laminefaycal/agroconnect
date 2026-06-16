@@ -8,8 +8,6 @@ namespace App\Domain\Commande;
  * Définit les différents modes de livraison disponibles pour une commande sur AgroConnect.
  * Cet enum backé par une chaîne de caractères (string) garantit la cohérence des règles métiers
  * liées à la logistique d'acheminement au Gabon.
- *
- * @package App\Domain\Commande
  */
 enum ModelLivraison: string
 {

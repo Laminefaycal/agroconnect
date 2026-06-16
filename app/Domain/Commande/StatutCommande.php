@@ -7,8 +7,6 @@ namespace App\Domain\Commande;
  *
  * Représente les différents états possibles d'une commande tout au long de son cycle de vie.
  * Cet enum sécurise la logique métier en interdisant l'utilisation de statuts non conformes.
- *
- * @package App\Domain\Commande
  */
 enum StatutCommande: string
 {

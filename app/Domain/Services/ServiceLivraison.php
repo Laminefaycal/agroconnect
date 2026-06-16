@@ -10,16 +10,13 @@ use App\Domain\Transporteur\Transporteur;
  *
  * Service du Domaine (Domain Service) gérant les interactions complexes et les flux
  * de mise en relation entre les livraisons de marchandises et les transporteurs partenaires.
- *
- * @package App\Domain\Services
  */
 class ServiceLivraison
 {
     /**
      * Publie ou notifie une livraison disponible auprès du réseau de transporteurs AgroConnect.
      *
-     * @param Livraison $livraison L'entité Livraison à proposer.
-     * @return void
+     * @param  Livraison  $livraison  L'entité Livraison à proposer.
      */
     public function proposerAuxTransporteurs(Livraison $livraison): void
     {
@@ -29,9 +26,8 @@ class ServiceLivraison
     /**
      * Gère l'affectation finale d'une livraison à un transporteur spécifique.
      *
-     * @param Livraison $livraison L'entité Livraison concernée.
-     * @param Transporteur $transporteur L'entité Transporteur qui prend en charge la course.
-     * @return void
+     * @param  Livraison  $livraison  L'entité Livraison concernée.
+     * @param  Transporteur  $transporteur  L'entité Transporteur qui prend en charge la course.
      */
     public function affecterTransporteur(Livraison $livraison, Transporteur $transporteur): void
     {

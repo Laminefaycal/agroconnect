@@ -7,15 +7,13 @@ namespace App\Domain\Livraison;
  *
  * Définit le contrat de persistance pour la gestion logistique des livraisons.
  * Permet de découpler la gestion des flux de transport de l'infrastructure technique.
- *
- * @package App\Domain\Livraison
  */
 interface LivraisonRepositoryInterface
 {
     /**
      * Recherche un enregistrement de livraison par son identifiant unique.
      *
-     * @param string $id L'identifiant de la livraison.
+     * @param  string  $id  L'identifiant de la livraison.
      * @return Livraison|null L'entité Livraison correspondante, ou null si elle n'existe pas.
      */
     public function findById(string $id): ?Livraison;
@@ -31,8 +29,7 @@ interface LivraisonRepositoryInterface
     /**
      * Sauvegarde ou met à jour les informations d'une livraison.
      *
-     * @param Livraison $livraison L'entité Livraison à persister.
-     * @return void
+     * @param  Livraison  $livraison  L'entité Livraison à persister.
      */
     public function save(Livraison $livraison): void;
 }
