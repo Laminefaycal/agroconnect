@@ -2,6 +2,8 @@
 
 namespace App\Domain\Commande;
 
+use App\Domain\Produit\Produit;
+
 /**
  * Class LigneCommande
  *
@@ -10,16 +12,18 @@ namespace App\Domain\Commande;
  */
 class LigneCommande
 {
-    /**
-     * Constructeur de la ligne de commande avec promotion de propriétés.
-     *
-     * @param  int  $quantite  La quantité de produits commandés.
-     * @param  float  $prixUnitaire  Le prix unitaire du produit (en FCFA).
-     */
-    public function __construct(
-        private int $quantite,
-        private float $prixUnitaire,
-    ) {}
+    private Produit $produit;
+
+    private int $quantite;
+
+    private float $prixUnitaire;
+
+    public function __construct(Produit $produit, int $quantite, float $prixUnitaire)
+    {
+        $this->produit = $produit;
+        $this->quantite = $quantite;
+        $this->prixUnitaire = $prixUnitaire;
+    }
 
     /**
      * Calcule le montant total pour cette ligne de commande.
@@ -45,5 +49,10 @@ class LigneCommande
     public function getPrixUnitaire(): float
     {
         return $this->prixUnitaire;
+    }
+
+    public function getProduit(): Produit
+    {
+        return $this->produit;
     }
 }

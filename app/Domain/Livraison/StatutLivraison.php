@@ -10,6 +10,7 @@ namespace App\Domain\Livraison;
  */
 enum StatutLivraison: string
 {
+    case PROPOSEE = 'PROPOSEE';
     /**
      * @var string Un transporteur a accepté la course et lui a été officiellement assigné.
      */

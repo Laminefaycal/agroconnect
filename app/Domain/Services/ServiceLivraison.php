@@ -2,8 +2,13 @@
 
 namespace App\Domain\Services;
 
+use App\Domain\Commande\CommandeRepositoryInterface;
+use App\Domain\Commande\ModeLivraison;
 use App\Domain\Livraison\Livraison;
+use App\Domain\Livraison\LivraisonRepositoryInterface;
+use App\Domain\Livraison\StatutLivraison;
 use App\Domain\Transporteur\Transporteur;
+use App\Domain\Transporteur\TransporteurRepositoryInterface;
 
 /**
  * Class ServiceLivraison
@@ -13,14 +18,32 @@ use App\Domain\Transporteur\Transporteur;
  */
 class ServiceLivraison
 {
+    public function __construct(
+        private TransporteurRepositoryInterface $transporteurRepository,
+        private LivraisonRepositoryInterface $livraisonRepository,
+        private CommandeRepositoryInterface $commandeRepository,
+        private TransporteurNotificationInterface $notificationService
+    ) {}
+
     /**
-     * Publie ou notifie une livraison disponible auprès du réseau de transporteurs AgroConnect.
-     *
-     * @param  Livraison  $livraison  L'entité Livraison à proposer.
+     * Propose la livraison aux transporteurs disponibles, sauf si le mode est AGRICULTEUR.
      */
     public function proposerAuxTransporteurs(Livraison $livraison): void
     {
-        // Logique pour lister, filtrer ou notifier les transporteurs de la zone géographique
+
+        $commande = $this->commandeRepository->findByLivraisonId($livraison->getId());
+        if (! $commande) {
+            throw new \RuntimeException('Aucune commande associée à cette livraison.');
+        }
+
+        if ($commande->getModeLivraison() === ModeLivraison::AGRICULTEUR) {
+            return;
+        }
+
+        $transporteurs = $this->transporteurRepository->findAllDisponibles();
+
+        $livraison->mettreAJourStatut(StatutLivraison::PROPOSEE);
+        $this->livraisonRepository->save($livraison);
     }
 
     /**
@@ -31,6 +54,7 @@ class ServiceLivraison
      */
     public function affecterTransporteur(Livraison $livraison, Transporteur $transporteur): void
     {
-        // Logique d'affectation finale et de mise à jour des entités
+        $livraison->assignerTransporteur($transporteur);
+        $this->livraisonRepository->save($livraison);
     }
 }
