@@ -1,4 +1,4 @@
-@startuml
+  @startuml
 title "Couche Domaine - Plateforme Agricole (DDD)"
 
 package "Domain" {
