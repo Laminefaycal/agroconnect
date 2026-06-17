@@ -104,7 +104,7 @@ jobs:
 
       - name: Run Unit Tests
         id: tests
-        run: php artisan test --no-interaction --stop-on-failure
+        run: php artisan test
         env:
           APP_ENV: testing
         continue-on-error: true
