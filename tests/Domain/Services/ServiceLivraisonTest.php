@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Domain;
+namespace Tests\Domain\Services;
 
 use App\Domain\Commande\Commande;
 use App\Domain\Commande\CommandeRepositoryInterface;

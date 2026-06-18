@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Domain;
+namespace Tests\Domain\Services;
 
 use App\Domain\Produit\Produit;
 use App\Domain\Services\ServiceDisponibilite;

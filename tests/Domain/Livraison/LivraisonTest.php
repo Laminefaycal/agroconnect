@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Domain;
+namespace Tests\Domain\Livraison;
 
 use App\Domain\Livraison\Livraison;
 use App\Domain\Livraison\StatutLivraison;
