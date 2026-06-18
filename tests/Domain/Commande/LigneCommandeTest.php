@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Domain;
+namespace Tests\Domain\Commande;
 
 use App\Domain\Commande\LigneCommande;
 use App\Domain\Produit\Produit;

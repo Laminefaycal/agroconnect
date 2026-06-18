@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Domain;
+namespace Tests\Domain\Agriculteur;
 
 use App\Domain\Agriculteur\Agriculteur;
 use PHPUnit\Framework\TestCase;

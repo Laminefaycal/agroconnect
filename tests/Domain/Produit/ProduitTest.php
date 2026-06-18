@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Domain;
+namespace Tests\Domain\Produit;
 
 use App\Domain\Produit\Produit;
 
