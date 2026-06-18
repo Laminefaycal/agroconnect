@@ -9,9 +9,9 @@ namespace App\Application\Agriculteur\DTO;
 class ValiderCommandeDto
 {
     /**
-     * @var int L'identifiant unique de la commande à valider.
+     * @var string L'identifiant unique de la commande à valider.
      */
-    public int $commandeId;
+    public string $commandeId;
 
     /**
      * @var bool Indique si le produit commandé est disponible en stock ou non.
@@ -24,18 +24,18 @@ class ValiderCommandeDto
     public string $modeLivraison;
 
     /**
-     * @var int|null L'identifiant unique du transporteur assigné (optionnel).
+     * @var string|null L'identifiant unique du transporteur assigné (optionnel).
      */
-    public ?int $transporteurId;
+    public ?string $transporteurId;
 
     /**
      * ValiderCommandeDto constructor.
      */
     public function __construct(
-        int $commandeId,
+        string $commandeId,
         bool $estDisponible,
         string $modeLivraison,
-        ?int $transporteurId = null
+        ?string $transporteurId = null
     ) {
         $this->commandeId = $commandeId;
         $this->estDisponible = $estDisponible;

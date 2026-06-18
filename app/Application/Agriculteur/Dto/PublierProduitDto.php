@@ -9,9 +9,9 @@ namespace App\Application\Agriculteur\DTO;
 class PublierProduitDto
 {
     /**
-     * @var int L'identifiant unique de l'agriculteur qui publie le produit.
+     * @var string L'identifiant unique de l'agriculteur qui publie le produit.
      */
-    public int $agriculteurId;
+    public string $agriculteurId;
 
     /**
      * @var string Le nom du produit agricole.
@@ -42,7 +42,7 @@ class PublierProduitDto
      * PublierProduitDto constructor.
      */
     public function __construct(
-        int $agriculteurId,
+        string $agriculteurId,
         string $nom,
         string $description,
         float $prix,
