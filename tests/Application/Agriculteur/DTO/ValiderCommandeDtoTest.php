@@ -9,7 +9,7 @@ it('creates PublierProduitDto with correct values', function () {
         agriculteurId: 1,
         nom: 'Tomates Bio',
         description: 'Tomates fraîches cultivées sans pesticides',
-        prix: 2.5,
+        prix: 2.5, 
         stock: 100,
         unite: 'kg'
     );
