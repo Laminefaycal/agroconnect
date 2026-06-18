@@ -5,7 +5,6 @@ namespace App\Application\Agriculteur\DTO;
 /**
  * Class ValiderCommandeDto
  * * Objet de transfert de données (DTO) pour la validation d'une commande par un agriculteur.
- * * @package App\Application\Agriculteur\DTO
  */
 class ValiderCommandeDto
 {
@@ -31,11 +30,6 @@ class ValiderCommandeDto
 
     /**
      * ValiderCommandeDto constructor.
-     *
-     * @param int $commandeId
-     * @param bool $estDisponible
-     * @param string $modeLivraison
-     * @param int|null $transporteurId
      */
     public function __construct(
         int $commandeId,

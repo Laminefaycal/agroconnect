@@ -5,28 +5,24 @@ namespace App\Application\Consommateur\DTO;
 /**
  * Class ValiderReceptionDto
  * * Transporte les données nécessaires pour confirmer la réception d'une commande par le client.
- *
- * @package App\Application\Consommateur\DTO
  */
 class ValiderReceptionDto
 {
     /**
      * L'identifiant unique de la commande reçue.
-     * @var string
      */
     private string $commandeId;
 
     /**
      * Indicateur confirmant si la marchandise est effectivement livrée.
-     * @var bool
      */
     private bool $estLivree;
 
     /**
      * ValiderReceptionDto constructor.
      *
-     * @param string $commandeId L'identifiant de la commande concernée.
-     * @param bool $estLivree Statut de livraison (true si reçue avec succès).
+     * @param  string  $commandeId  L'identifiant de la commande concernée.
+     * @param  bool  $estLivree  Statut de livraison (true si reçue avec succès).
      */
     public function __construct(string $commandeId, bool $estLivree)
     {
@@ -36,8 +32,6 @@ class ValiderReceptionDto
 
     /**
      * Récupère l'identifiant de la commande.
-     *
-     * @return string
      */
     public function getCommandeId(): string
     {
@@ -46,8 +40,6 @@ class ValiderReceptionDto
 
     /**
      * Vérifie si la commande a bien été confirmée comme livrée.
-     *
-     * @return bool
      */
     public function isEstLivree(): bool
     {

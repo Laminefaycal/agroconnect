@@ -5,7 +5,6 @@ namespace App\Application\Agriculteur\DTO;
 /**
  * Class PublierProduitDto
  * * Objet de transfert de données (DTO) pour la publication d'un nouveau produit par un agriculteur.
- * * @package App\Application\Agriculteur\DTO
  */
 class PublierProduitDto
 {
@@ -41,13 +40,6 @@ class PublierProduitDto
 
     /**
      * PublierProduitDto constructor.
-     *
-     * @param int $agriculteurId
-     * @param string $nom
-     * @param string $description
-     * @param float $prix
-     * @param int $stock
-     * @param string $unite
      */
     public function __construct(
         int $agriculteurId,
