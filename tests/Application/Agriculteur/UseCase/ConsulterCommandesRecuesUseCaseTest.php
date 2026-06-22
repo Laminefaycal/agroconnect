@@ -1,48 +1,40 @@
 <?php
 
-namespace Test\Application\Agriculteur\UseCase;
+namespace Tests\Application\Agriculteur\UseCase;
 
 use App\Application\Agriculteur\UseCase\ConsulterCommandesRecuesUseCase;
-use App\Domain\Repository\CommandeRepositoryInterface;
+use App\Domain\Interface\Repository\CommandeRepositoryInterface;
 
-test('il peut être instancié avec un dépôt de commandes', function () {
-    // Arrange
-    $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
+test('il doit retourner la liste des commandes reçues pour un agriculteur donné', function () {
+    // 1. Préparation (Arrange)
+    $agriculteurId = 'agri-uuid-1234';
 
-    // Act
-    $useCase = new ConsulterCommandesRecuesUseCase($commandeRepositoryMock);
-
-    // Assert
-    expect($useCase)->toBeInstanceOf(ConsulterCommandesRecuesUseCase::class);
-});
-
-test("il retourne la liste des commandes reçues pour un agriculteur donné", function () {
-    // Arrange
-    $agriculteurId = 'agri-123';
-    $commandesFactices = [
-        ['id' => 'cmd-001', 'produit' => 'Manioc', 'quantite' => 50],
-        ['id' => 'cmd-002', 'produit' => 'Banane Banane', 'quantite' => 100],
+    // Un faux tableau de commandes pour simuler le retour de la base de données
+    $commandesSimulees = [
+        ['id' => 'commande-1', 'produit' => 'Tomates', 'quantite' => 50],
+        ['id' => 'commande-2', 'produit' => 'Pommes de terre', 'quantite' => 100],
     ];
 
-    // On crée le mock et on configure la méthode attendue du Repository
+    // Création du mock pour l'interface du Repository
     $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
 
-    // Décommentez et ajustez le nom de la méthode selon votre vraie interface de dépôt :
-    // $commandeRepositoryMock->shouldReceive('recupererParAgriculteur')
-    //     ->once()
-    //     ->with($agriculteurId)
-    //     ->andReturn($commandesFactices);
+    // On s'attend à ce que findByAgriculteurId soit appelé une fois avec le bon ID
+    // et qu'il retourne nos commandes simulées
+    $commandeRepositoryMock
+        ->shouldReceive('findByAgriculteurId')
+        ->once()
+        ->with($agriculteurId)
+        ->andReturn($commandesSimulees);
 
+    // Instanciation du Use Case avec le mock injecté
     $useCase = new ConsulterCommandesRecuesUseCase($commandeRepositoryMock);
 
-    // Act
+    // 2. Exécution (Act)
     $resultat = $useCase->execute($agriculteurId);
 
-    // Assert
-    expect($resultat)->toBeArray();
-    // Remarque : Pour l'instant, votre code renvoie un tableau vide []
-    expect($resultat)->toBeEmpty();
-
-    // Une fois votre logique implémentée dans le Use Case, vous changerez par :
-    // expect($resultat)->toHaveCount(2);
+    // 3. Affirmations (Assert)
+    expect($resultat)
+        ->toBeArray()
+        ->toHaveCount(2)
+        ->toEqual($commandesSimulees);
 });

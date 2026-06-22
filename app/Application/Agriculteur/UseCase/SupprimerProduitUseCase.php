@@ -2,6 +2,7 @@
 
 namespace App\Application\Agriculteur\UseCase;
 
+<<<<<<< HEAD
 use App\Domain\Repository\ProduitRepositoryInterface;
 
 /**
@@ -26,5 +27,27 @@ class SupprimerProduitUseCase
     public function execute(string $produitId): void
     {
         // Logique de suppression...
+=======
+use App\Domain\Interface\Repository\ProduitRepositoryInterface;
+
+class SupprimerProduitUseCase
+{
+    private $produitRepository;
+
+    public function __construct(ProduitRepositoryInterface $produitRepository)
+    {
+        $this->produitRepository = $produitRepository;
+    }
+
+    public function execute(string $produitId): void
+    {
+        $produit = $this->produitRepository->findById($produitId);
+
+        if (!$produit) {
+            throw new \Exception("Produit introuvable.");
+        }
+
+        $this->produitRepository->delete($produitId);
+>>>>>>> feature/implementer-use-cases-agriculteur
     }
 }

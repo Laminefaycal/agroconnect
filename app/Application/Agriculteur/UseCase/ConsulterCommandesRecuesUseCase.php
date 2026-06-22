@@ -2,6 +2,7 @@
 
 namespace App\Application\Agriculteur\UseCase;
 
+<<<<<<< HEAD
 use App\Domain\Repository\CommandeRepositoryInterface;
 
 /**
@@ -25,5 +26,22 @@ class ConsulterCommandesRecuesUseCase
     public function execute(string $agriculteurId): array
     {
         return [];
+=======
+use App\Domain\Interface\Repository\CommandeRepositoryInterface;
+
+class ConsulterCommandesRecuesUseCase
+{
+    private $commandeRepository;
+
+    public function __construct(CommandeRepositoryInterface $commandeRepository)
+    {
+        $this->commandeRepository = $commandeRepository;
+    }
+
+    public function execute(string $agriculteurId): array
+    {
+        // Récupère la liste des commandes liées à cet agriculteur précis
+        return $this->commandeRepository->findByAgriculteurId($agriculteurId);
+>>>>>>> feature/implementer-use-cases-agriculteur
     }
 }
