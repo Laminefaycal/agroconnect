@@ -7,21 +7,21 @@ use App\Application\Consommateur\DTO\ValiderReceptionDto;
 it('initialise correctement une validation de réception', function () {
     $dto = new ValiderReceptionDto(
         commandeId: 'CMD-001',
-        estLivree: true
+        estRecue: true
     );
 
-    expect($dto->getCommandeId())->toBe('CMD-001')
-        ->and($dto->isEstLivree())->toBeTrue();
+    expect($dto->commandeId)->toBe('CMD-001')
+        ->and($dto->estRecue)->toBeTrue();
 });
 
 it('peut représenter une commande non livrée', function () {
     $dto = new ValiderReceptionDto(
         commandeId: 'CMD-002',
-        estLivree: false
+        estRecue: false
     );
 
-    expect($dto->getCommandeId())->toBe('CMD-002')
-        ->and($dto->isEstLivree())->toBeFalse();
+    expect($dto->commandeId)->toBe('CMD-002')
+        ->and($dto->estRecue)->toBeFalse();
 });
 
 it('retourne les types attendus', function () {
@@ -30,6 +30,6 @@ it('retourne les types attendus', function () {
         true
     );
 
-    expect($dto->getCommandeId())->toBeString()
-        ->and($dto->isEstLivree())->toBeBool();
+    expect($dto->commandeId)->toBeString()
+        ->and($dto->estRecue)->toBeBool();
 });

@@ -11,13 +11,13 @@ it('initialise correctement une commande', function () {
 
     $dto = new PasserCommandeDto(
         consommateurId: 'CONS-001',
-        panier: [$ligne1, $ligne2],
+        lignes: [$ligne1, $ligne2],
         adresseLivraison: 'Libreville, Quartier Louis'
     );
 
-    expect($dto->getConsommateurId())->toBe('CONS-001')
-        ->and($dto->getPanier())->toHaveCount(2)
-        ->and($dto->getAdresseLivraison())->toBe('Libreville, Quartier Louis');
+    expect($dto->consommateurId)->toBe('CONS-001')
+        ->and($dto->lignes)->toHaveCount(2)
+        ->and($dto->adresseLivraison)->toBe('Libreville, Quartier Louis');
 });
 
 it('contient les lignes de commande attendues', function () {
@@ -29,9 +29,9 @@ it('contient les lignes de commande attendues', function () {
         'Libreville'
     );
 
-    expect($dto->getPanier()[0])->toBeInstanceOf(LigneCommandeDto::class)
-        ->and($dto->getPanier()[0]->getProduitId())->toBe('PROD-001')
-        ->and($dto->getPanier()[0]->getQuantite())->toBe(3);
+    expect($dto->lignes[0])->toBeInstanceOf(LigneCommandeDto::class)
+        ->and($dto->lignes[0]->produitId)->toBe('PROD-001')
+        ->and($dto->lignes[0]->quantite)->toBe(3);
 });
 
 it('retourne les types attendus', function () {
@@ -41,7 +41,7 @@ it('retourne les types attendus', function () {
         'Libreville'
     );
 
-    expect($dto->getConsommateurId())->toBeString()
-        ->and($dto->getPanier())->toBeArray()
-        ->and($dto->getAdresseLivraison())->toBeString();
+    expect($dto->consommateurId)->toBeString()
+        ->and($dto->lignes)->toBeArray()
+        ->and($dto->adresseLivraison)->toBeString();
 });

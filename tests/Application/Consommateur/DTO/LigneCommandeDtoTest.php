@@ -10,16 +10,13 @@ it('initialise correctement une ligne de commande', function () {
         quantite: 5
     );
 
-    expect($dto->getProduitId())->toBe('PROD-001')
-        ->and($dto->getQuantite())->toBe(5);
+    expect($dto->produitId)->toBe('PROD-001')
+        ->and($dto->quantite)->toBe(5);
 });
 
 it('retourne les types attendus', function () {
-    $dto = new LigneCommandeDto(
-        'PROD-001',
-        5
-    );
+    $dto = new LigneCommandeDto('PROD-001', 5);
 
-    expect($dto->getProduitId())->toBeString()
-        ->and($dto->getQuantite())->toBeInt();
+    expect($dto->produitId)->toBeString()
+        ->and($dto->quantite)->toBeInt();
 });
