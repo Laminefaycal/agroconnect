@@ -3,34 +3,48 @@
 namespace Tests\Application\Agriculteur\DTO;
 
 use App\Application\Agriculteur\DTO\ValiderCommandeDto;
+use App\Domain\Commande\ModeLivraison;
 
-it('peut être instancié correctement avec toutes ses valeurs', function () {
-    // 1. Arrange & Act
+test('il peut être instancié avec tous les paramètres', function () {
     $dto = new ValiderCommandeDto(
-        commandeId: 'CMD-456',
+        commandeId: 'cmd-123',
         estDisponible: true,
-        modeLivraison: 'TRANSPORTEUR_PLATEFORME',
-        transporteurId: 'TRANS-77'
+        modeLivraison: ModeLivraison::TRANSPORTEUR,
+        transporteurId: 'tr-456'
     );
 
-    // 2. Assert
-    expect($dto->commandeId)->toBe('CMD-456')
-        ->and($dto->estDisponible)->toBeTrue()
-        ->and($dto->modeLivraison)->toBe('TRANSPORTEUR_PLATEFORME')
-        ->and($dto->transporteurId)->toBe('TRANS-77');
+    expect($dto->commandeId)->toBe('cmd-123');
+    expect($dto->estDisponible)->toBeTrue();
+    expect($dto->modeLivraison)->toBe(ModeLivraison::TRANSPORTEUR);
+    expect($dto->transporteurId)->toBe('tr-456');
 });
 
-it('initialise le transporteur id à null par défaut si non fourni', function () {
-    // 1. Arrange & Act
+test('il peut être instancié sans identifiant de transporteur', function () {
     $dto = new ValiderCommandeDto(
-        commandeId: 'CMD-456',
+        commandeId: 'cmd-789',
         estDisponible: false,
-        modeLivraison: 'AGRICULTEUR'
+        modeLivraison: ModeLivraison::AGRICULTEUR
     );
 
-    // 2. Assert
-    expect($dto->commandeId)->toBe('CMD-456')
-        ->and($dto->estDisponible)->toBeFalse()
-        ->and($dto->modeLivraison)->toBe('AGRICULTEUR')
-        ->and($dto->transporteurId)->toBeNull(); // Vérifie que la valeur par défaut est bien null
+    expect($dto->commandeId)->toBe('cmd-789');
+    expect($dto->estDisponible)->toBeFalse();
+    expect($dto->modeLivraison)->toBe(ModeLivraison::AGRICULTEUR);
+    expect($dto->transporteurId)->toBeNull();
+});
+
+test('il accepte les différentes valeurs de l\'enum ModeLivraison', function () {
+    $dto1 = new ValiderCommandeDto('1', true, ModeLivraison::TRANSPORTEUR);
+    expect($dto1->modeLivraison)->toBe(ModeLivraison::TRANSPORTEUR);
+
+    $dto2 = new ValiderCommandeDto('2', false, ModeLivraison::AGRICULTEUR);
+    expect($dto2->modeLivraison)->toBe(ModeLivraison::AGRICULTEUR);
+});
+
+test('les propriétés sont correctement typées', function () {
+    $dto = new ValiderCommandeDto('cmd-abc', true, ModeLivraison::TRANSPORTEUR, 'tr-xyz');
+
+    expect($dto->commandeId)->toBeString();
+    expect($dto->estDisponible)->toBeBool();
+    expect($dto->modeLivraison)->toBeInstanceOf(ModeLivraison::class);
+    expect($dto->transporteurId)->toBeString(); // ou null, mais ici on a passé une chaîne
 });
