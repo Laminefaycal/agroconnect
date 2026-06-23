@@ -2,6 +2,7 @@
 
 namespace App\Domain\Produit;
 
+use App\Domain\Agriculteur\Agriculteur;
 /**
  * Class Produit
  *
@@ -11,6 +12,7 @@ namespace App\Domain\Produit;
  */
 class Produit
 {
+    private Agriculteur $agriculteur;
     /**
      * Constructeur de l'entité Produit avec promotion de propriétés.
      *
@@ -81,5 +83,19 @@ class Produit
     public function getUnite(): string
     {
         return $this->unite;
+    }
+
+    /**
+     * assoccier l'agriculteur au produit
+     */
+    public function setAgriculteur(Agriculteur $agriculteur){
+        $this->agriculteur = $agriculteur;
+    }
+
+    /**
+     * Recuperer l'agriculteur du produit
+     */
+    public function getAgriculteur(){
+        return $this->agriculteur;
     }
 }

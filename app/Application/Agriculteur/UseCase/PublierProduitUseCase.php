@@ -5,6 +5,7 @@ namespace App\Application\Agriculteur\UseCase;
 use App\Domain\Repository\ProduitRepositoryInterface;
 use App\Domain\Repository\AgriculteurRepositoryInterface;
 use App\Application\Agriculteur\DTO\PublierProduitDto;
+use App\Domain\Produit\Produit;
 
 /**
  * Cas d'utilisation pour la création et la publication d'un nouveau produit par un agriculteur.
@@ -24,11 +25,20 @@ class PublierProduitUseCase
      * Crée un produit à partir du DTO et le publie sur la plateforme.
      *
      * @param PublierProduitDto $dto Le conteneur de données pour la publication.
-     * @return mixed Le produit nouvellement créé et publié.
+     * @return Produit Le produit nouvellement créé et publié.
      */
-    public function execute(PublierProduitDto $dto): mixed
+    public function execute(PublierProduitDto $dto): Produit
     {
-        // Logique de création et persistance...
-        return null;
+        $agriculteur = $this->agriculteurRepository->findById($dto->agriculteurId);
+        if (!$agriculteur) {
+             throw new AgriculteurInexistantException(sprintf("L'agriculteur avec l'identifiant '%s' n'existe pas.", $dto->agriculteurId));
+        }
+        $produit = new Produit(uniqid(), $dto->nom, $dto->description, $dto->prix, $dto->stock, $dto->unite);
+        $produit->setAgriculteur($agriculteur);
+        $produitSauvegarde = $this->produitRepository->save($produit);
+        if (!$produitSauvegarde) {
+            throw new ProduitNonSauvegardeException('Impossible de sauvegarder le produit.');
+        }
+        return $produitSauvegarde;
     }
 }

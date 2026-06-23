@@ -38,7 +38,7 @@ interface ProduitRepositoryInterface
      *
      * @param  Produit  $produit  L'entité Produit à persister.
      */
-    public function save(Produit $produit): void;
+    public function save(Produit $produit): ?Produit;
 
     /**
      * Supprime définitivement un produit du catalogue à partir de son identifiant.
