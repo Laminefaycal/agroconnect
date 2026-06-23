@@ -2,7 +2,8 @@
 
 namespace App\Application\Agriculteur\UseCase;
 
-use App\Domain\Interface\Repository\ProduitRepositoryInterface;
+use App\Domain\Produit\ProduitRepositoryInterface;
+use InvalidArgumentException;
 
 class ModifierProduitUseCase
 {
@@ -15,17 +16,28 @@ class ModifierProduitUseCase
 
     public function execute(string $produitId, array $data): void
     {
-        // 1. Récupérer le produit via le repository
         $produit = $this->produitRepository->findById($produitId);
 
         if (!$produit) {
-            throw new \Exception("Produit non trouvé.");
+            throw new InvalidArgumentException('Produit non trouvé.');
         }
 
-        // 2. Modifier les propriétés (Logique métier ou appel d'une méthode de l'entité)
-        // Exemple : $produit->modifier($data);
+        if (isset($data['nom'])) {
+            $produit->setNom($data['nom']);
+        }
+        if (isset($data['description'])) {
+            $produit->setDescription($data['description']);
+        }
+        if (isset($data['prixUnitaire'])) {
+            $produit->setPrixUnitaire($data['prixUnitaire']);
+        }
+        if (isset($data['stock'])) {
+            $produit->setStock($data['stock']);
+        }
+        if (isset($data['unite'])) {
+            $produit->setUnite($data['unite']);
+        }
 
-        // 3. Sauvegarder les modifications
         $this->produitRepository->save($produit);
     }
 }

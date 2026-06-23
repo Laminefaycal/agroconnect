@@ -1,59 +1,87 @@
 <?php
 
 namespace Tests\Application\Agriculteur\UseCase;
+
 use App\Application\Agriculteur\UseCase\ModifierProduitUseCase;
-use App\Domain\Interface\Repository\ProduitRepositoryInterface;
+use App\Domain\Produit\ProduitRepositoryInterface;
+use App\Domain\Produit\Produit;
+use InvalidArgumentException;
+use Mockery;
 
-test('il modifie et sauvegarde le produit avec succès', function () {
-    // 1. Préparation (Arrange)
-    $produitId = 'prod-123';
-    $data = ['nom' => 'Nouvelle Pomme', 'prix' => 2.5];
+describe('ModifierProduitUseCase', function () {
+    beforeEach(function () {
+        // Mock du repository avec la BONNE interface
+        $this->repositoryMock = Mockery::mock(ProduitRepositoryInterface::class);
+        $this->useCase = new ModifierProduitUseCase($this->repositoryMock);
+    });
 
-    // On crée un faux produit (un objet générique pour le test)
-    $produitMock = new stdClass();
+    it('modifie un produit existant et le persiste', function () {
+        $produitId = 'prod-123';
+        $data = [
+            'nom'          => 'Tomates bio',
+            'description'  => 'Tomates fraîches du jardin',
+            'prixUnitaire' => 3.99,
+            'stock'        => 75,
+            'unite'        => 'kg',
+        ];
 
-    // On mocke le repository
-    $produitRepository = mock(ProduitRepositoryInterface::class);
+        $produitMock = Mockery::mock(Produit::class);
+        $produitMock->shouldReceive('setNom')->with($data['nom'])->once()->andReturnSelf();
+        $produitMock->shouldReceive('setDescription')->with($data['description'])->once()->andReturnSelf();
+        $produitMock->shouldReceive('setPrixUnitaire')->with($data['prixUnitaire'])->once()->andReturnSelf();
+        $produitMock->shouldReceive('setStock')->with($data['stock'])->once()->andReturnSelf();
+        $produitMock->shouldReceive('setUnite')->with($data['unite'])->once()->andReturnSelf();
 
-    // On s'attend à ce que findById soit appelé et retourne notre faux produit
-    $produitRepository->shouldReceive('findById')
-        ->once()
-        ->with($produitId)
-        ->andReturn($produitMock);
+        $this->repositoryMock->shouldReceive('findById')
+            ->with($produitId)
+            ->once()
+            ->andReturn($produitMock);
+        $this->repositoryMock->shouldReceive('save')
+            ->with($produitMock)
+            ->once();
 
-    // On s'attend à ce que save soit appelé avec ce même produit
-    $produitRepository->shouldReceive('save')
-        ->once()
-        ->with($produitMock);
+        $this->useCase->execute($produitId, $data);
 
-    // 2. Exécution (Act)
-    $useCase = new ModifierProduitUseCase($produitRepository);
-    $useCase->execute($produitId, $data);
+        expect(true)->toBeTrue(); // succès si aucune exception
+    });
 
-    // 3. Affirmation (Assert)
-    // Pest validera automatiquement que les méthodes du mock ont été appelées comme prévu (Mockery sous le capot)
-});
+    it('lève une exception si le produit n\'existe pas', function () {
+        $produitId = 'prod-inexistant';
+        $data = ['nom' => 'Nouveau nom'];
 
-test('il lève une exception si le produit n\'existe pas', function () {
-    // 1. Préparation (Arrange)
-    $produitId = 'prod-invalide';
-    $data = ['nom' => 'Test'];
+        $this->repositoryMock->shouldReceive('findById')
+            ->with($produitId)
+            ->once()
+            ->andReturnNull();
+        $this->repositoryMock->shouldReceive('save')->never();
 
-    $produitRepository = mock(ProduitRepositoryInterface::class);
+        expect(fn() => $this->useCase->execute($produitId, $data))
+            ->toThrow(InvalidArgumentException::class, 'Produit non trouvé.');
+    });
 
-    // Le repository retourne null car le produit n'existe pas
-    $produitRepository->shouldReceive('findById')
-        ->once()
-        ->with($produitId)
-        ->andReturn(null);
+    it('ne modifie que les champs fournis dans le tableau de données', function () {
+        $produitId = 'prod-456';
+        $data = [
+            'prixUnitaire' => 12.50,
+            'stock'        => 100,
+        ];
 
-    // La méthode save ne devrait JAMAIS être appelée dans ce cas
-    $produitRepository->shouldNotReceive('save');
+        $produitMock = Mockery::mock(Produit::class);
+        $produitMock->shouldReceive('setPrixUnitaire')->with(12.50)->once()->andReturnSelf();
+        $produitMock->shouldReceive('setStock')->with(100)->once()->andReturnSelf();
+        $produitMock->shouldReceive('setNom')->never();
+        $produitMock->shouldReceive('setDescription')->never();
+        $produitMock->shouldReceive('setUnite')->never();
 
-    // 2. Exécution & Affirmation (Act & Assert)
-    $useCase = new ModifierProduitUseCase($produitRepository);
+        $this->repositoryMock->shouldReceive('findById')
+            ->with($produitId)
+            ->once()
+            ->andReturn($produitMock);
+        $this->repositoryMock->shouldReceive('save')
+            ->with($produitMock)
+            ->once();
 
-    // On dit à Pest qu'on s'attend à ce qu'une Exception soit levée
-    expect(fn () => $useCase->execute($produitId, $data))
-        ->toThrow(\Exception::class, "Produit non trouvé.");
+        $this->useCase->execute($produitId, $data);
+        expect(true)->toBeTrue();
+    });
 });

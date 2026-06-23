@@ -98,4 +98,34 @@ class Produit
     public function getAgriculteur(){
         return $this->agriculteur;
     }
+
+    public function setNom(string $nom): self
+    {
+        $this->nom = $nom;
+        return $this;
+    }
+
+    public function setDescription(string $description): self
+    {
+        $this->description = $description;
+        return $this;
+    }
+
+    public function setPrixUnitaire(float $prixUnitaire): self
+    {
+        $this->prixUnitaire = $prixUnitaire;
+        return $this;
+    }
+
+    public function setStock(int $stock): self
+    {
+        $this->stock = $stock;
+        return $this;
+    }
+
+    public function setUnite(string $unite): self
+    {
+        $this->unite = $unite;
+        return $this;
+    }
 }
