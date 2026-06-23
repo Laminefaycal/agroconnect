@@ -4,32 +4,35 @@ namespace Tests\Application\Consommateur\DTO;
 
 use App\Application\Consommateur\DTO\ValiderReceptionDto;
 
-it('initialise correctement une validation de réception', function () {
+it('peut être instancié avec des arguments nommés et retourne les bonnes valeurs', function () {
+    // Act
     $dto = new ValiderReceptionDto(
         commandeId: 'CMD-001',
-        estRecue: true
+        estLivree: true
     );
 
-    expect($dto->commandeId)->toBe('CMD-001')
-        ->and($dto->estRecue)->toBeTrue();
+    // Assert
+    expect($dto->getCommandeId())->toBe('CMD-001')
+        ->and($dto->isEstLivree())->toBeTrue();
 });
 
 it('peut représenter une commande non livrée', function () {
+    // Act
     $dto = new ValiderReceptionDto(
         commandeId: 'CMD-002',
-        estRecue: false
+        estLivree: false
     );
 
-    expect($dto->commandeId)->toBe('CMD-002')
-        ->and($dto->estRecue)->toBeFalse();
+    // Assert
+    expect($dto->getCommandeId())->toBe('CMD-002')
+        ->and($dto->isEstLivree())->toBeFalse();
 });
 
-it('retourne les types attendus', function () {
-    $dto = new ValiderReceptionDto(
-        'CMD-001',
-        true
-    );
+it('retourne les bons types de données', function () {
+    // Act
+    $dto = new ValiderReceptionDto('CMD-003', true);
 
-    expect($dto->commandeId)->toBeString()
-        ->and($dto->estRecue)->toBeBool();
+    // Assert
+    expect($dto->getCommandeId())->toBeString()
+        ->and($dto->isEstLivree())->toBeBool();
 });
