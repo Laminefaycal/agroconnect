@@ -4,10 +4,12 @@ namespace App\Application\Consommateur\UseCase;
 
 use App\Application\Consommateur\Dto\PasserCommandeDto;
 use App\Domain\Commande\Commande;
+use App\Domain\Commande\LigneCommande;
 use App\Domain\Commande\Repository\CommandeRepositoryInterface;
 use App\Domain\Consommateur\Repository\ConsommateurRepositoryInterface;
 use App\Domain\Produit\Repository\ProduitRepositoryInterface;
 use App\Domain\Services\ServiceDisponibilite;
+use DateTime;
 
 /**
  * Cas d'utilisation gérant l'action de passer une commande par le consommateur.
@@ -49,19 +51,43 @@ class PasserCommandeUseCase
      *
      * @param PasserCommandeDto $dto
      * @return Commande La commande générée.
-     * @throws \Exception Si un produit n'est pas disponible ou si le consommateur est introuvable.
+     * @throws \InvalidArgumentException Si un produit n'est pas disponible ou introuvable.
      */
     public function execute(PasserCommandeDto $dto): Commande
     {
-        // 1. Logique métier : Vérification de la disponibilité via le Service de Domaine
-        // 2. Récupération des entités requises
-        // 3. Instanciation de l'objet métier Commande
-        // 4. Sauvegarde via le repository
+        // Le Service de Domaine vérifie si les lignes du DTO sont disponibles en stock
+        if (!$this->serviceDisponibilite->verifierLignes($dto->lignes)) {
+            throw new \InvalidArgumentException("Certains produits demandés ne sont plus disponibles en quantité suffisante.");
+        }
 
-        // Exemple purement conceptuel :
-        // $commande = Commande::creer($dto->idConsommateur, $dto->lignes);
-        // return $this->commandeRepository->save($commande);
+        $commande = new Commande(
+            id: uniqid('cmd-'),
+            dateCommande: new DateTime(),
+            statut: \App\Domain\Commande\StatutCommande::EN_ATTENTE_VALIDATION,
+            modeLivraison: $dto->modeLivraison
+        );
 
-        throw new \Exception("Logique interne à implémenter selon vos règles métier.");
+        // Transformation de chaque tableau array en entité LigneCommande
+        foreach ($dto->lignes as $ligneData) {
+            // 💡 Récupération de l'objet Produit requis par LigneCommande via son Repository
+            $produit = $this->produitRepository->findById($ligneData['produitId']);
+
+            if (!$produit) {
+                throw new \InvalidArgumentException("Le produit avec l'ID {$ligneData['produitId']} n'existe pas.");
+            }
+
+            // Instanciation conforme à la signature : Produit, int, float
+            $ligneCommande = new LigneCommande(
+                $produit,
+                $ligneData['quantite'],
+                $produit->getPrix() // Récupère le prix actuel du produit pour fixer le prix unitaire
+            );
+
+            $commande->ajouterLigne($ligneCommande);
+        }
+
+        $this->commandeRepository->save($commande);
+
+        return $commande;
     }
 }

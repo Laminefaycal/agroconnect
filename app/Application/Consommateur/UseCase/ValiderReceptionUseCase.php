@@ -36,7 +36,28 @@ class ValiderReceptionUseCase
      */
     public function execute(string $idLivraison): void
     {
-        // Logique métier : récupérer la livraison, changer son statut,
-        // mettre à jour la commande associée et sauvegarder.
+
+    // 1. Récupérer la livraison
+    $livraison = $this->livraisonRepository->findById($idLivraison);
+
+    if (!$livraison) {
+        throw new \Exception("Livraison introuvable");
+    }
+
+    // 2. Récupérer la commande associée
+    $commande = $this->commandeRepository->findById($livraison->getCommandeId());
+
+    if (!$commande) {
+        throw new \Exception("Commande introuvable");
+    }
+
+    // 3. Mettre à jour les statuts
+    $livraison->confirmerReception();
+    $commande->confirmerReception();
+
+    // 4. Sauvegarder
+    $this->livraisonRepository->save($livraison);
+    $this->commandeRepository->save($commande);
+
     }
 }

@@ -8,6 +8,8 @@ namespace App\Application\Consommateur\DTO;
  */
 class PasserCommandeDto
 {
+    public array $lignes = [];
+    public $modeLivraison;
     /**
      * L'identifiant unique du consommateur qui passe la commande.
      */
