@@ -27,23 +27,46 @@ class ValiderCommandeUseCase
         $this->serviceLivraison = $serviceLivraison;
     }
 
-    public function execute(ValiderCommandeDto $dto): void
-    {
-        // 1. Récupérer la commande
-        $commande = $this->commandeRepository->findById($dto->getCommandeId());
-        if (!$commande) {
-            throw new \Exception("Commande introuvable.");
-        }
+   public function execute(ValiderCommandeDto $dto): void
+{
+    $commande = $this->commandeRepository
+        ->findById($dto->commandeId);
 
-        // 2. Valider le statut de la commande côté domaine
-        $commande->valider();
-        $this->commandeRepository->save($commande);
-
-        // 3. Utiliser le service de domaine pour planifier ou gérer la livraison
-        // Exemple avec le ServiceLivraison injecté
-        $livraison = $this->serviceLivraison->planifier($commande, $dto->getTransporteurId());
-
-        // 4. Sauvegarder la livraison générée
-        $this->livraisonRepository->save($livraison);
+    if (!$commande) {
+        throw new \Exception(
+            'Commande introuvable.'
+        );
     }
+
+    if (!$commande->estEnAttente()) {
+        throw new \DomainException(
+            'Commande déjà traitée.'
+        );
+    }
+
+    $transporteur =
+        $this->transporteurRepository
+            ->trouverDisponible();
+
+    if (!$transporteur) {
+        throw new \DomainException(
+            'Aucun transporteur disponible.'
+        );
+    }
+
+    $commande->valider();
+
+    $livraison =
+        $this->serviceLivraison
+            ->creerLivraison(
+                $commande,
+                $transporteur
+            );
+
+    $this->livraisonRepository
+        ->save($livraison);
+
+    $this->commandeRepository
+        ->save($commande);
+}
 }

@@ -14,8 +14,17 @@ class ConsulterCommandesRecuesUseCase
     }
 
     public function execute(string $agriculteurId): array
-    {
-        // Récupère la liste des commandes liées à cet agriculteur précis
-        return $this->commandeRepository->findByAgriculteurId($agriculteurId);
+{
+    if (empty($agriculteurId)) {
+        throw new \InvalidArgumentException('Identifiant obligatoire.');
     }
+
+    $commandes = $this->commandeRepository->findByAgriculteurId($agriculteurId);
+
+    // array_values permet de remettre les clés à zéro [0, 1] après le filtrage
+    return array_values(array_filter(
+        $commandes,
+        fn($commande) => $commande->getStatut()->value !== 'TERMINEE' // 💡 On compare des chaînes pures (.value)
+    ));
 }
+ }

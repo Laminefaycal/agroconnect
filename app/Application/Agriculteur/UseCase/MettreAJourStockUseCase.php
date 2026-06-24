@@ -15,15 +15,20 @@ class MettreAJourStockUseCase
 
     public function execute(string $produitId, int $quantite): void
     {
-        $produit = $this->produitRepository->findById($produitId);
+    $produit = $this->produitRepository->findById($produitId);
 
-        if (!$produit) {
-            throw new \Exception("Produit introuvable pour la mise à jour du stock.");
-        }
-
-        // Met à jour la quantité sur l'entité
-        $produit->setQuantite($quantite);
-
-        $this->produitRepository->save($produit);
+    if (!$produit) {
+        throw new \Exception('Produit introuvable.');
     }
+
+    if ($quantite < 0) {
+        throw new \InvalidArgumentException(
+            'Le stock ne peut pas être négatif.'
+        );
+    }
+
+    $produit->setQuantite($quantite);
+
+    $this->produitRepository->save($produit);
+}
 }
