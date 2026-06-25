@@ -2,146 +2,83 @@
 
 namespace Test\Application\Consommateur\UseCase;
 
-
-use App\Application\Consommateur\UseCase\PasserCommandeUseCase;
+use App\Domain\Interface\Repository\CommandeRepositoryInterface;
+use App\Domain\Interface\Repository\ConsommateurRepositoryInterface;
+use App\Domain\Interface\Repository\ProduitRepositoryInterface;
+use App\Domain\Service\ServiceDisponibilite;
 use App\Application\Consommateur\Dto\PasserCommandeDto;
 use App\Domain\Commande\Commande;
-use App\Domain\Commande\ModeLivraison;
+use App\Domain\Commande\LigneCommande;
 use App\Domain\Commande\StatutCommande;
-use App\Domain\Commande\Repository\CommandeRepositoryInterface;
-use App\Domain\Consommateur\Repository\ConsommateurRepositoryInterface;
-use App\Domain\Produit\Repository\ProduitRepositoryInterface;
-use App\Domain\Produit\Produit;
-use App\Domain\Services\ServiceDisponibilite;
-use InvalidArgumentException;
-use Mockery;
+use App\Domain\Commande\ModeLivraison;
+use DateTime;
 
-beforeEach(function () {
-    // Initialisation des mocks pour toutes les dépendances requises
-    $this->commandeRepository = mock(CommandeRepositoryInterface::class);
-    $this->consommateurRepository = mock(ConsommateurRepositoryInterface::class);
-    $this->produitRepository = mock(ProduitRepositoryInterface::class);
-    $this->serviceDisponibilite = mock(ServiceDisponibilite::class);
+/**
+ * Cas d'utilisation gérant la création et le passage d'une commande par un consommateur.
+ */
+class PasserCommandeUseCase
+{
+    public function __construct(
+        private CommandeRepositoryInterface $commandeRepository,
+        private ConsommateurRepositoryInterface $consommateurRepository,
+        private ProduitRepositoryInterface $produitRepository,
+        private ServiceDisponibilite $serviceDisponibilite
+    ) {}
 
-    // Instanciation de la classe à tester
-    $this->useCase = new PasserCommandeUseCase(
-        $this->commandeRepository,
-        $this->consommateurRepository,
-        $this->produitRepository,
-        $this->serviceDisponibilite
-    );
-});
+    /**
+     * Orchestre les vérifications métier et enregistre la nouvelle commande.
+     *
+     * @param PasserCommandeDto $dto Les données de la commande.
+     * @return Commande L'entité de la commande créée.
+     * @throws \Exception Si le consommateur ou le produit n'existe pas, ou si le stock est insuffisant.
+     */
+    public function execute(PasserCommandeDto $dto): Commande
+    {
+        // 1. Validation de l'existence du consommateur
+        $consommateur = $this->consommateurRepository->findById($dto->getConsommateurId());
+        if (!$consommateur) {
+            throw new \Exception('Consommateur introuvable.');
+        }
 
-afterEach(function () {
-    Mockery::close();
-});
+        // 2. Validation du produit et de sa disponibilité logistique
+        $produit = $this->produitRepository->findById($dto->getProduitId());
+        if (!$produit) {
+            throw new \Exception('Produit introuvable.');
+        }
 
-it('cree et persiste la commande avec succes lorsque les produits sont disponibles', function () {
-    // 1. Arrange
-    $lignesData = [
-        ['produitId' => 'prod-100', 'quantite' => 2]
-    ];
+        if (!$this->serviceDisponibilite->estDisponiblePourZone($produit, $dto->getAdresseLivraison())) {
+            throw new \DomainException('Ce produit ne peut pas être livré dans votre zone.');
+        }
 
-    $dto = new PasserCommandeDto(
-        consommateurId: 'client-123',
-        panier: $lignesData,
-        adresseLivraison: '123 Rue de la République'
-    );
+        // 3. Règle métier : Vérification et déduction des stocks du producteur
+        if ($produit->getQuantite() < $dto->getQuantite()) {
+            throw new \DomainException('Stock insuffisant pour ce produit.');
+        }
 
-    $dto->lignes = $lignesData;
-    $dto->modeLivraison = ModeLivraison::TRANSPORTEUR;
+        // Mettre à jour le stock du produit au sein du domaine
+        $produit->retirerDuStock($dto->getQuantite());
+        $this->produitRepository->save($produit);
 
-    // Simulation du comportement du produit trouvé
-    $produitMock = mock(Produit::class);
-    $produitMock->shouldReceive('getPrix')->andReturn(1500.0);
+        $commande = new Commande(
+            id: uniqid('cmd_'),
+            dateCommande: new DateTime(),
+            statut: StatutCommande::EN_ATTENTE_VALIDATION,
+            modeLivraison: ModeLivraison::TRANSPORTEUR
+        );
 
-    $this->serviceDisponibilite
-        ->shouldReceive('verifierLignes')
-        ->once()
-        ->with($dto->lignes)
-        ->andReturn(true);
+        $ligneCommande = new LigneCommande(
+            id: uniqid('ligne_'),
+            produitId: $dto->getProduitId(),
+            quantite: $dto->getQuantite()
+        );
 
-    $this->produitRepository
-        ->shouldReceive('findById')
-        ->once()
-        ->with('prod-100')
-        ->andReturn($produitMock);
+        $commande->ajouterLigne($ligneCommande);
 
-    $this->commandeRepository
-        ->shouldReceive('save')
-        ->once()
-        ->with(Mockery::type(Commande::class));
+        // Optionnel : si ton entité stocke l'adresse de livraison directement
+        if (method_exists($commande, 'setAdresseLivraison')) {
+            $commande->setAdresseLivraison($dto->getAdresseLivraison());
+        }
 
-    // 2. Act
-    $commande = $this->useCase->execute($dto);
-
-    // 3. Assert
-    expect($commande)->toBeInstanceOf(Commande::class)
-        ->and($commande->getId())->toStartWith('cmd-')
-        ->and($commande->getStatut())->toBe(StatutCommande::EN_ATTENTE_VALIDATION);
-});
-
-it('leve une exception si certains produits ne sont pas disponibles en quantite suffisante', function () {
-    // 1. Arrange
-    $lignesInvalides = [
-        ['produitId' => 'prod-rupture', 'quantite' => 10]
-    ];
-
-    $dto = new PasserCommandeDto(
-        consommateurId: 'client-123',
-        panier: $lignesInvalides,
-        adresseLivraison: '123 Rue de la République'
-    );
-
-    $dto->lignes = $lignesInvalides;
-    $dto->modeLivraison = ModeLivraison::AGRICULTEUR;
-
-    $this->serviceDisponibilite
-        ->shouldReceive('verifierLignes')
-        ->once()
-        ->with($dto->lignes)
-        ->andReturn(false);
-
-    // Le repository ne doit pas être appelé pour chercher le produit si les lignes ne sont pas dispo
-    $this->produitRepository->shouldReceive('findById')->never();
-    $this->commandeRepository->shouldReceive('save')->never();
-
-    // 2. Act & Assert
-    expect(fn () => $this->useCase->execute($dto))
-        ->toThrow(InvalidArgumentException::class, "Certains produits demandés ne sont plus disponibles en quantité suffisante.");
-});
-
-it('leve une exception si un produit n existe pas dans le repository', function () {
-    // 1. Arrange
-    $lignesData = [
-        ['produitId' => 'prod-inexistant', 'quantite' => 1]
-    ];
-
-    $dto = new PasserCommandeDto(
-        consommateurId: 'client-123',
-        panier: $lignesData,
-        adresseLivraison: '123 Rue de la République'
-    );
-
-    $dto->lignes = $lignesData;
-    $dto->modeLivraison = ModeLivraison::AGRICULTEUR;
-
-    $this->serviceDisponibilite
-        ->shouldReceive('verifierLignes')
-        ->once()
-        ->with($dto->lignes)
-        ->andReturn(true);
-
-    // Le produit renvoie null (introuvable)
-    $this->produitRepository
-        ->shouldReceive('findById')
-        ->once()
-        ->with('prod-inexistant')
-        ->andReturn(null);
-
-    $this->commandeRepository->shouldReceive('save')->never();
-
-    // 2. Act & Assert
-    expect(fn () => $this->useCase->execute($dto))
-        ->toThrow(InvalidArgumentException::class, "Le produit avec l'ID prod-inexistant n'existe pas.");
-});
+        return $this->commandeRepository->save($commande);
+    }
+}

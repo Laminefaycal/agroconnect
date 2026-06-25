@@ -4,22 +4,16 @@ namespace App\Application\Consommateur\UseCase;
 
 use App\Domain\Commande\Repository\CommandeRepositoryInterface;
 use App\Domain\Livraison\Repository\LivraisonRepositoryInterface;
+use App\Application\Consommateur\Dto\ValiderReceptionDto;
 
 /**
  * Cas d'utilisation permettant au consommateur de valider la bonne réception de sa commande.
  */
 class ValiderReceptionUseCase
 {
-    /** @var CommandeRepositoryInterface */
     private CommandeRepositoryInterface $commandeRepository;
-
-    /** @var LivraisonRepositoryInterface */
     private LivraisonRepositoryInterface $livraisonRepository;
 
-    /**
-     * @param CommandeRepositoryInterface $commandeRepository
-     * @param LivraisonRepositoryInterface $livraisonRepository
-     */
     public function __construct(
         CommandeRepositoryInterface $commandeRepository,
         LivraisonRepositoryInterface $livraisonRepository
@@ -31,33 +25,27 @@ class ValiderReceptionUseCase
     /**
      * Valide la réception d'une livraison spécifique.
      *
-     * @param string $idLivraison L'identifiant de la livraison.
+     * @param ValiderReceptionDto $dto
      * @return void
      */
-    public function execute(string $idLivraison): void
+    public function execute(ValiderReceptionDto $dto): void
     {
+        $commandeId = $dto->getCommandeId();
 
-    // 1. Récupérer la livraison
-    $livraison = $this->livraisonRepository->findById($idLivraison);
+        $commande = $this->commandeRepository->findById($commandeId);
 
-    if (!$livraison) {
-        throw new \Exception("Livraison introuvable");
-    }
+        if (!$commande) {
+            throw new \Exception('Commande introuvable.');
+        }
 
-    // 2. Récupérer la commande associée
-    $commande = $this->commandeRepository->findById($livraison->getCommandeId());
+        $livraison = $this->livraisonRepository->findByCommandeId($commandeId);
 
-    if (!$commande) {
-        throw new \Exception("Commande introuvable");
-    }
+        if (!$livraison) {
+            throw new \Exception('Livraison introuvable.');
+        }
 
-    // 3. Mettre à jour les statuts
-    $livraison->confirmerReception();
-    $commande->confirmerReception();
+        $livraison->confirmerReception();
 
-    // 4. Sauvegarder
-    $this->livraisonRepository->save($livraison);
-    $this->commandeRepository->save($commande);
-
+        $this->livraisonRepository->save($livraison);
     }
 }

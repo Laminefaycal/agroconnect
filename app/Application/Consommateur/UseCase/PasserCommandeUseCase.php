@@ -2,32 +2,18 @@
 
 namespace App\Application\Consommateur\UseCase;
 
+use App\Domain\Interface\Repository\CommandeRepositoryInterface;
+use App\Domain\Interface\Repository\ConsommateurRepositoryInterface;
+use App\Domain\Interface\Repository\ProduitRepositoryInterface;
+use App\Domain\Service\ServiceDisponibilite;
 use App\Application\Consommateur\Dto\PasserCommandeDto;
 use App\Domain\Commande\Commande;
-use App\Domain\Commande\LigneCommande;
-use App\Domain\Commande\Repository\CommandeRepositoryInterface;
-use App\Domain\Consommateur\Repository\ConsommateurRepositoryInterface;
-use App\Domain\Produit\Repository\ProduitRepositoryInterface;
-use App\Domain\Services\ServiceDisponibilite;
-use DateTime;
 
 /**
- * Cas d'utilisation gérant l'action de passer une commande par le consommateur.
+ * Cas d'utilisation gérant la création et le passage d'une commande par un consommateur.
  */
 class PasserCommandeUseCase
 {
-    /** @var CommandeRepositoryInterface */
-    private CommandeRepositoryInterface $commandeRepository;
-
-    /** @var ConsommateurRepositoryInterface */
-    private ConsommateurRepositoryInterface $consommateurRepository;
-
-    /** @var ProduitRepositoryInterface */
-    private ProduitRepositoryInterface $produitRepository;
-
-    /** @var ServiceDisponibilite */
-    private ServiceDisponibilite $serviceDisponibilite;
-
     /**
      * @param CommandeRepositoryInterface $commandeRepository
      * @param ConsommateurRepositoryInterface $consommateurRepository
@@ -35,59 +21,55 @@ class PasserCommandeUseCase
      * @param ServiceDisponibilite $serviceDisponibilite
      */
     public function __construct(
-        CommandeRepositoryInterface $commandeRepository,
-        ConsommateurRepositoryInterface $consommateurRepository,
-        ProduitRepositoryInterface $produitRepository,
-        ServiceDisponibilite $serviceDisponibilite
-    ) {
-        $this->commandeRepository = $commandeRepository;
-        $this->consommateurRepository = $consommateurRepository;
-        $this->produitRepository = $produitRepository;
-        $this->serviceDisponibilite = $serviceDisponibilite;
-    }
+        private CommandeRepositoryInterface $commandeRepository,
+        private ConsommateurRepositoryInterface $consommateurRepository,
+        private ProduitRepositoryInterface $produitRepository,
+        private ServiceDisponibilite $serviceDisponibilite
+    ) {}
 
     /**
-     * Exécute le processus de création et d'enregistrement d'une commande.
+     * Orchestre les vérifications métier et enregistre la nouvelle commande.
      *
-     * @param PasserCommandeDto $dto
-     * @return Commande La commande générée.
-     * @throws \InvalidArgumentException Si un produit n'est pas disponible ou introuvable.
+     * @param PasserCommandeDto $dto Les données de la commande.
+     * @return Commande L'entité de la commande créée.
+     * @throws \Exception Si le consommateur ou le produit n'existe pas, ou si le stock est insuffisant.
      */
     public function execute(PasserCommandeDto $dto): Commande
     {
-        // Le Service de Domaine vérifie si les lignes du DTO sont disponibles en stock
-        if (!$this->serviceDisponibilite->verifierLignes($dto->lignes)) {
-            throw new \InvalidArgumentException("Certains produits demandés ne sont plus disponibles en quantité suffisante.");
+        // 1. Validation de l'existence du consommateur
+        $consommateur = $this->consommateurRepository->findById($dto->getConsommateurId());
+        if (!$consommateur) {
+            throw new \Exception('Consommateur introuvable.');
         }
 
+        // 2. Validation du produit et de sa disponibilité logistique
+        $produit = $this->produitRepository->findById($dto->getProduitId());
+        if (!$produit) {
+            throw new \Exception('Produit introuvable.');
+        }
+
+        if (!$this->serviceDisponibilite->estDisponiblePourZone($produit, $dto->getAdresseLivraison())) {
+            throw new \DomainException('Ce produit ne peut pas être livré dans votre zone.');
+        }
+
+        // 3. Règle métier : Vérification et déduction des stocks du producteur
+        if ($produit->getQuantite() < $dto->getQuantite()) {
+            throw new \DomainException('Stock insuffisant pour ce produit.');
+        }
+
+        // Mettre à jour le stock du produit au sein du domaine
+        $produit->retirerDuStock($dto->getQuantite());
+        $this->produitRepository->save($produit);
+
+        // 4. Instanciation et sauvegarde de la commande
         $commande = new Commande(
-            id: uniqid('cmd-'),
-            dateCommande: new DateTime(),
-            statut: \App\Domain\Commande\StatutCommande::EN_ATTENTE_VALIDATION,
-            modeLivraison: $dto->modeLivraison
+            id: uniqid('cmd_'),
+            consommateurId: $dto->getConsommateurId(),
+            produitId: $dto->getProduitId(),
+            quantite: $dto->getQuantite(),
+            adresseLivraison: $dto->getAdresseLivraison()
         );
 
-        // Transformation de chaque tableau array en entité LigneCommande
-        foreach ($dto->lignes as $ligneData) {
-            // 💡 Récupération de l'objet Produit requis par LigneCommande via son Repository
-            $produit = $this->produitRepository->findById($ligneData['produitId']);
-
-            if (!$produit) {
-                throw new \InvalidArgumentException("Le produit avec l'ID {$ligneData['produitId']} n'existe pas.");
-            }
-
-            // Instanciation conforme à la signature : Produit, int, float
-            $ligneCommande = new LigneCommande(
-                $produit,
-                $ligneData['quantite'],
-                $produit->getPrix() // Récupère le prix actuel du produit pour fixer le prix unitaire
-            );
-
-            $commande->ajouterLigne($ligneCommande);
-        }
-
-        $this->commandeRepository->save($commande);
-
-        return $commande;
+        return $this->commandeRepository->save($commande);
     }
 }

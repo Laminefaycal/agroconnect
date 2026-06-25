@@ -5,26 +5,57 @@ namespace Test\Application\Consommateur\UseCase;
 use App\Application\Consommateur\UseCase\SuivreLivraisonUseCase;
 use App\Domain\Commande\Repository\CommandeRepositoryInterface;
 use App\Domain\Livraison\Repository\LivraisonRepositoryInterface;
+use App\Domain\Commande\Commande;
+use App\Domain\Livraison\Livraison;
 
-test('il doit retourner les détails de suivi associés à une commande', function () {
-    // Arrange
-    $idCommande = 'cmd-123';
-    $donneesSuiviSimulees = ['statut' => 'En cours de route', 'transporteur' => 'Chronopost'];
+it('retourne les détails de la livraison quand la commande existe', function () {
+    // 1. ARRANGEMENT
+    $commandeId = 'cmd-xyz-789';
 
-    $commandeRepository = mock(CommandeRepositoryInterface::class);
-    $livraisonRepository = mock(LivraisonRepositoryInterface::class);
+    // Création des doubles (Mocks) pour l'entité et la livraison
+    $commandeMock = mock(Commande::class);
+    $livraisonMock = mock(Livraison::class);
 
-    $livraisonRepository->shouldReceive('findByCommandeId')
-        ->with($idCommande)
+    // Mock du CommandeRepository
+    $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
+    $commandeRepositoryMock->shouldReceive('findById')
         ->once()
-        ->andReturn($donneesSuiviSimulees);
+        ->with($commandeId)
+        ->andReturn($commandeMock);
 
-    $useCase = new SuivreLivraisonUseCase($commandeRepository, $livraisonRepository);
+    // Mock du LivraisonRepository
+    $livraisonRepositoryMock = mock(LivraisonRepositoryInterface::class);
+    $livraisonRepositoryMock->shouldReceive('findByCommandeId')
+        ->once()
+        ->with($commandeId)
+        ->andReturn($livraisonMock);
 
-    // Act
-    $resultat = $useCase->execute($idCommande);
+    // 2. ACT
+    $useCase = new SuivreLivraisonUseCase($commandeRepositoryMock, $livraisonRepositoryMock);
+    $resultat = $useCase->execute($commandeId);
 
-    // Assert
-    expect($resultat)->toBe($donneesSuiviSimulees)
-        ->and($resultat['statut'])->toBe('En cours de route');
+    // 3. ASSERT
+    expect($resultat)->toBe($livraisonMock);
+});
+
+it('lève une exception si la commande est introuvable', function () {
+    // 1. ARRANGEMENT
+    $commandeId = 'cmd-inexistante';
+
+    $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
+    // On simule qu'aucune commande n'est trouvée (renvoie null)
+    $commandeRepositoryMock->shouldReceive('findById')
+        ->once()
+        ->with($commandeId)
+        ->andReturn(null);
+
+    // RÈGLE DE SÉCURITÉ : Le dépôt de livraison ne doit jamais être interrogé
+    $livraisonRepositoryMock = mock(LivraisonRepositoryInterface::class);
+    $livraisonRepositoryMock->shouldNotReceive('findByCommandeId');
+
+    // 2. ACT & ASSERT
+    $useCase = new SuivreLivraisonUseCase($commandeRepositoryMock, $livraisonRepositoryMock);
+
+    expect(fn() => $useCase->execute($commandeId))
+        ->toThrow(\Exception::class, 'Commande introuvable.');
 });

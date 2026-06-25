@@ -2,33 +2,28 @@
 
 namespace App\Application\Consommateur\UseCase;
 
-use App\Domain\Produit\Repository\ProduitRepositoryInterface;
+use App\Domain\Produit\ProduitRepositoryInterface;
 
 /**
- * Cas d'utilisation permettant à un consommateur de consulter le catalogue des produits.
+ * Cas d'utilisation permettant à un consommateur de consulter le catalogue des produits disponibles.
  */
 class ConsulterCatalogueUseCase
 {
     /**
-     * @var ProduitRepositoryInterface
+     * @param ProduitRepositoryInterface $produitRepository Le dépôt des produits.
      */
-    private ProduitRepositoryInterface $produitRepository;
+    public function __construct(
+        private ProduitRepositoryInterface $produitRepository
+    ) {}
 
     /**
-     * @param ProduitRepositoryInterface $produitRepository
-     */
-    public function __construct(ProduitRepositoryInterface $produitRepository)
-    {
-        $this->produitRepository = $produitRepository;
-    }
-
-    /**
-     * Exécute la consultation du catalogue.
+     * Extrait la liste de tous les produits actifs du catalogue.
      *
-     * @return array Liste de tous les produits disponibles.
+     * @return array Tableau contenant les entités Produits disponibles.
      */
     public function execute(): array
     {
-        return $this->produitRepository->findAllAvailable();
+        // Logique métier : On ne récupère que les produits disponibles/en stock
+        return $this->produitRepository->findByDisponibilite(true);
     }
 }

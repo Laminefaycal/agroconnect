@@ -3,24 +3,46 @@
 namespace Test\Application\Consommateur\UseCase;
 
 use App\Application\Consommateur\UseCase\RechercheProduitUseCase;
-use App\Domain\Produit\Repository\ProduitRepositoryInterface;
+use App\Domain\Produit\ProduitRepositoryInterface;
+use App\Domain\Produit\Produit;
 
-test('il doit retourner les produits correspondants au mot-clé recherché', function () {
-    // Arrange
-    $motCle = 'Carotte';
-    $resultatRecherche = [['id' => '3', 'nom' => 'Carotte Pourpre']];
+it('retourne la liste des produits correspondants au mot-clé nettoyé', function () {
+    // 1. ARRANGEMENT
+    $keywordBrut = '   Manioc   ';
+    $keywordNettoye = 'Manioc';
 
-    $produitRepository = mock(ProduitRepositoryInterface::class);
-    $produitRepository->shouldReceive('searchByKeyword')
-        ->with($motCle)
+    $produitMock1 = mock(Produit::class);
+    $produitMock2 = mock(Produit::class);
+    $resultatAttendu = [$produitMock1, $produitMock2];
+
+    $produitRepositoryMock = mock(ProduitRepositoryInterface::class);
+    $produitRepositoryMock->shouldReceive('searchByKeyword')
         ->once()
-        ->andReturn($resultatRecherche);
+        ->with($keywordNettoye)
+        ->andReturn($resultatAttendu);
 
-    $useCase = new RechercheProduitUseCase($produitRepository);
+    // 2. ACT
+    $useCase = new RechercheProduitUseCase($produitRepositoryMock);
+    $resultat = $useCase->execute($keywordBrut);
 
-    // Act
-    $resultat = $useCase->execute($motCle);
-
-    // Assert
-    expect($resultat)->toBe($resultatRecherche);
+    // 3. ASSERT
+    expect($resultat)->toBeArray()
+        ->toHaveCount(2)
+        ->toBe($resultatAttendu);
 });
+
+it('lève une exception de type InvalidArgumentException si le mot-clé est vide ou composé uniquement d’espaces', function (string $keywordInvalide) {
+    // 1. ARRANGEMENT
+    $produitRepositoryMock = mock(ProduitRepositoryInterface::class);
+    $produitRepositoryMock->shouldNotReceive('searchByKeyword');
+
+    $useCase = new RechercheProduitUseCase($produitRepositoryMock);
+
+    // 2. ACT & ASSERT
+    expect(fn() => $useCase->execute($keywordInvalide))
+        ->toThrow(\InvalidArgumentException::class, 'Le mot-clé de recherche ne peut pas être vide.');
+})->with([
+    'chaîne totalement vide' => '',
+    'chaîne avec uniquement des espaces' => '    ',
+    'chaîne avec tabulations et retours à la ligne' => "\t\n  ",
+]);

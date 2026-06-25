@@ -3,85 +3,97 @@
 namespace Test\Application\Consommateur\UseCase;
 
 use App\Application\Consommateur\UseCase\ValiderReceptionUseCase;
-use App\Domain\Commande\Commande;
+use App\Application\Consommateur\Dto\ValiderReceptionDto;
 use App\Domain\Commande\Repository\CommandeRepositoryInterface;
-use App\Domain\Livraison\Livraison;
 use App\Domain\Livraison\Repository\LivraisonRepositoryInterface;
-use Mockery;
+use App\Domain\Commande\Commande;
+use App\Domain\Livraison\Livraison;
 
-beforeEach(function () {
-    $this->commandeRepository = Mockery::mock(CommandeRepositoryInterface::class);
-    $this->livraisonRepository = Mockery::mock(LivraisonRepositoryInterface::class);
+it('valide la réception de la livraison avec succès', function () {
+    // 1. ARRANGEMENT
+    $commandeId = 'cmd-123';
 
-    $this->useCase = new ValiderReceptionUseCase(
-        $this->commandeRepository,
-        $this->livraisonRepository
-    );
-});
+    $dtoMock = mock(ValiderReceptionDto::class);
+    $dtoMock->shouldReceive('getCommandeId')->andReturn($commandeId);
 
-it('lève une exception si la livraison est introuvable', function () {
+    $commandeMock = mock(Commande::class);
 
-    $this->livraisonRepository
-        ->shouldReceive('findById')
+    $livraisonMock = mock(Livraison::class);
+    $livraisonMock->shouldReceive('confirmerReception')->once();
+
+    $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
+    $commandeRepositoryMock->shouldReceive('findById')
         ->once()
-        ->with('liv-1')
-        ->andReturn(null);
+        ->with($commandeId)
+        ->andReturn($commandeMock);
 
-    expect(fn () => $this->useCase->execute('liv-1'))
-        ->toThrow(\Exception::class, "Livraison introuvable");
+    $livraisonRepositoryMock = mock(LivraisonRepositoryInterface::class);
+    $livraisonRepositoryMock->shouldReceive('findByCommandeId')
+        ->once()
+        ->with($commandeId)
+        ->andReturn($livraisonMock);
+
+    $livraisonRepositoryMock->shouldReceive('save')
+        ->once()
+        ->with($livraisonMock);
+
+    // 2. ACT
+    $useCase = new ValiderReceptionUseCase($commandeRepositoryMock, $livraisonRepositoryMock);
+    $useCase->execute($dtoMock);
+
+    // 3. ASSERT
+    expect(true)->toBeTrue();
 });
 
 it('lève une exception si la commande est introuvable', function () {
+    // 1. ARRANGEMENT
+    $commandeId = 'cmd-introuvable';
 
-    $livraison = Mockery::mock(Livraison::class);
-    $livraison->shouldReceive('getCommandeId')
-        ->andReturn('cmd-1');
+    $dtoMock = mock(ValiderReceptionDto::class);
+    $dtoMock->shouldReceive('getCommandeId')->andReturn($commandeId);
 
-    $this->livraisonRepository
-        ->shouldReceive('findById')
+    $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
+    $commandeRepositoryMock->shouldReceive('findById')
         ->once()
-        ->andReturn($livraison);
-
-    $this->commandeRepository
-        ->shouldReceive('findById')
-        ->once()
-        ->with('cmd-1')
+        ->with($commandeId)
         ->andReturn(null);
 
-    expect(fn () => $this->useCase->execute('liv-1'))
-        ->toThrow(\Exception::class, "Commande introuvable");
+    $livraisonRepositoryMock = mock(LivraisonRepositoryInterface::class);
+    $livraisonRepositoryMock->shouldNotReceive('findByCommandeId');
+
+    // 2. ACT & ASSERT
+    $useCase = new ValiderReceptionUseCase($commandeRepositoryMock, $livraisonRepositoryMock);
+
+    expect(fn() => $useCase->execute($dtoMock))
+        ->toThrow(\Exception::class, 'Commande introuvable.');
 });
 
-it('valide correctement la réception et sauvegarde les entités', function () {
+it('lève une exception si la livraison associée à la commande est introuvable', function () {
+    // 1. ARRANGEMENT
+    $commandeId = 'cmd-sans-livraison';
 
-    $livraison = Mockery::mock(Livraison::class);
-    $livraison->shouldReceive('getCommandeId')->andReturn('cmd-1');
-    $livraison->shouldReceive('confirmerReception')->once();
+    $dtoMock = mock(ValiderReceptionDto::class);
+    $dtoMock->shouldReceive('getCommandeId')->andReturn($commandeId);
 
-    $commande = Mockery::mock(Commande::class);
-    $commande->shouldReceive('confirmerReception')->once();
+    $commandeMock = mock(Commande::class);
 
-    $this->livraisonRepository
-        ->shouldReceive('findById')
+    $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
+    $commandeRepositoryMock->shouldReceive('findById')
         ->once()
-        ->andReturn($livraison);
+        ->with($commandeId)
+        ->andReturn($commandeMock);
 
-    $this->commandeRepository
-        ->shouldReceive('findById')
+    $livraisonRepositoryMock = mock(LivraisonRepositoryInterface::class);
+    $livraisonRepositoryMock->shouldReceive('findByCommandeId')
         ->once()
-        ->andReturn($commande);
+        ->with($commandeId)
+        ->andReturn(null);
 
-    $this->livraisonRepository
-        ->shouldReceive('save')
-        ->once()
-        ->with($livraison);
+    $livraisonRepositoryMock->shouldNotReceive('save');
 
-    $this->commandeRepository
-        ->shouldReceive('save')
-        ->once()
-        ->with($commande);
+    // 2. ACT & ASSERT
+    $useCase = new ValiderReceptionUseCase($commandeRepositoryMock, $livraisonRepositoryMock);
 
-    $this->useCase->execute('liv-1');
-
-    expect(true)->toBeTrue(); // test passe si aucune exception
+    expect(fn() => $useCase->execute($dtoMock))
+        ->toThrow(\Exception::class, 'Livraison introuvable.');
 });
