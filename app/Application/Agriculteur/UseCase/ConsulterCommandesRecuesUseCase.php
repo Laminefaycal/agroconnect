@@ -2,7 +2,7 @@
 
 namespace App\Application\Agriculteur\UseCase;
 
-use App\Domain\Interface\Repository\CommandeRepositoryInterface;
+use App\Domain\Commande\CommandeRepositoryInterface;
 
 class ConsulterCommandesRecuesUseCase
 {

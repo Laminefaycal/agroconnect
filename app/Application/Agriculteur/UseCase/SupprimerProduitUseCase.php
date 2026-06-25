@@ -2,7 +2,7 @@
 
 namespace App\Application\Agriculteur\UseCase;
 
-use App\Domain\Interface\Repository\ProduitRepositoryInterface;
+use App\Domain\Produit\ProduitRepositoryInterface;
 
 class SupprimerProduitUseCase
 {
@@ -22,9 +22,7 @@ class SupprimerProduitUseCase
     }
 
     if ($produit->aDesCommandesEnCours()) {
-        throw new \DomainException(
-            'Impossible de supprimer ce produit.'
-        );
+        throw new \DomainException( 'Impossible de supprimer ce produit.' );
     }
 
     $this->produitRepository->delete($produitId);

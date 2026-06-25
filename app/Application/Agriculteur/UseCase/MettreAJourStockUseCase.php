@@ -2,7 +2,7 @@
 
 namespace App\Application\Agriculteur\UseCase;
 
-use App\Domain\Interface\Repository\ProduitRepositoryInterface;
+use App\Domain\Produit\ProduitRepositoryInterface;
 
 class MettreAJourStockUseCase
 {
@@ -12,23 +12,18 @@ class MettreAJourStockUseCase
     {
         $this->produitRepository = $produitRepository;
     }
-
-    public function execute(string $produitId, int $quantite): void
+public function execute(string $produitId, array $data): void
     {
-    $produit = $this->produitRepository->findById($produitId);
+        $produit = $this->produitRepository->findById($produitId);
 
-    if (!$produit) {
-        throw new \Exception('Produit introuvable.');
+        if (!$produit) {
+            throw new \Exception("Produit introuvable.");
+        }
+
+
+        $produit->update($data);
+
+        $this->produitRepository->save($produit);
     }
-
-    if ($quantite < 0) {
-        throw new \InvalidArgumentException(
-            'Le stock ne peut pas être négatif.'
-        );
-    }
-
-    $produit->setQuantite($quantite);
-
-    $this->produitRepository->save($produit);
 }
-}
+

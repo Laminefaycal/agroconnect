@@ -2,9 +2,9 @@
 
 namespace Tests\Application\Agriculteur\UseCase;
 
-use App\Domain\Entity\Produit;
-use App\Domain\Interface\Repository\ProduitRepositoryInterface;
-use App\Domain\Interface\Repository\AgriculteurRepositoryInterface;
+use App\Domain\Produit;
+use App\Domain\Produit\ProduitRepositoryInterface;
+use App\Domain\Produit\AgriculteurRepositoryInterface;
 use App\Application\Agriculteur\Dto\PublierProduitDto;
 
 class PublierProduitUseCase

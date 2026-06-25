@@ -2,9 +2,9 @@
 
 namespace App\Application\Agriculteur\UseCase;
 
-use App\Domain\Interface\Repository\CommandeRepositoryInterface;
-use App\Domain\Interface\Repository\TransporteurRepositoryInterface;
-use App\Domain\Interface\Repository\LivraisonRepositoryInterface;
+use App\Domain\Commande\CommandeRepositoryInterface;
+use App\Domain\Transporteur\TransporteurRepositoryInterface;
+use App\Domain\Livraison\LivraisonRepositoryInterface;
 use App\Domain\Service\ServiceLivraison;
 use App\Application\Agriculteur\Dto\ValiderCommandeDto;
 
@@ -29,44 +29,28 @@ class ValiderCommandeUseCase
 
    public function execute(ValiderCommandeDto $dto): void
 {
-    $commande = $this->commandeRepository
-        ->findById($dto->commandeId);
+    $commande = $this->commandeRepository->findById($dto->commandeId);
 
     if (!$commande) {
-        throw new \Exception(
-            'Commande introuvable.'
-        );
+        throw new \Exception( 'Commande introuvable.' );
     }
 
     if (!$commande->estEnAttente()) {
-        throw new \DomainException(
-            'Commande déjà traitée.'
-        );
+        throw new \DomainException('Commande déjà traitée.' );
     }
 
-    $transporteur =
-        $this->transporteurRepository
-            ->trouverDisponible();
+    $transporteur = $this->transporteurRepository ->trouverDisponible();
 
     if (!$transporteur) {
-        throw new \DomainException(
-            'Aucun transporteur disponible.'
-        );
+        throw new \DomainException('Aucun transporteur disponible.');
     }
 
     $commande->valider();
 
-    $livraison =
-        $this->serviceLivraison
-            ->creerLivraison(
-                $commande,
-                $transporteur
-            );
+    $livraison = $this->serviceLivraison->creerLivraison($commande, $transporteur );
 
-    $this->livraisonRepository
-        ->save($livraison);
+    $this->livraisonRepository->save($livraison);
 
-    $this->commandeRepository
-        ->save($commande);
+    $this->commandeRepository->save($commande);
 }
 }

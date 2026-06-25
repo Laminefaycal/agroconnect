@@ -3,8 +3,8 @@
 namespace Tests\Application\Agriculteur\UseCase;
 
 use App\Application\Agriculteur\UseCase\SupprimerProduitUseCase;
-use App\Domain\Interface\Repository\ProduitRepositoryInterface;
-use App\Domain\Produit\Produit; // Adapte l'import selon le namespace réel de ton entité Produit
+use App\Domain\Produit\ProduitRepositoryInterface;
+use App\Domain\Produit\Produit;
 
 it('supprime le produit avec succès s’il existe et n’a pas de commandes en cours', function () {
     // 1. ARRANGEMENT

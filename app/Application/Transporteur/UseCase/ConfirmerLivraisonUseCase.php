@@ -33,7 +33,7 @@ class ConfirmerLivraisonUseCase
             throw new Exception("Livraison introuvable.");
         }
 
-        $livraison->changerStatut('livre'); // Ou votre constante métier correspondante
+        $livraison->changerStatut('livre');
 
         $this->livraisonRepository->save($livraison);
     }

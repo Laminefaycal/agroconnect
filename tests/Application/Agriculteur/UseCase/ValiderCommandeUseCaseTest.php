@@ -4,12 +4,12 @@ namespace Tests\Application\Agriculteur\UseCase;
 
 use App\Application\Agriculteur\UseCase\ValiderCommandeUseCase;
 use App\Application\Agriculteur\Dto\ValiderCommandeDto;
-use App\Domain\Interface\Repository\CommandeRepositoryInterface;
-use App\Domain\Interface\Repository\TransporteurRepositoryInterface;
-use App\Domain\Interface\Repository\LivraisonRepositoryInterface;
+use App\Domain\Commande\CommandeRepositoryInterface;
+use App\Domain\Transporteur\TransporteurRepositoryInterface;
+use App\Domain\Livraison\LivraisonRepositoryInterface;
 use App\Domain\Service\ServiceLivraison;
 use App\Domain\Commande\Commande;
-use App\Domain\Transporteur\Transporteur; // Adapte selon tes namespaces réels
+use App\Domain\Transporteur\Transporteur;
 use App\Domain\Livraison\Livraison;
 
 it('valide la commande et planifie la livraison avec succès', function () {
