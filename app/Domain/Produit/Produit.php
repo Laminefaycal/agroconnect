@@ -16,7 +16,7 @@ class Produit
     /**
      * Constructeur de l'entité Produit avec promotion de propriétés.
      *
-     * @param  string  $id  L'identifiant unique du produit.
+     * @param  string|null  $id  L'identifiant unique du produit.
      * @param  string  $nom  Le nom du produit (ex: Banane plantain, Manioc, etc.).
      * @param  string  $description  La description détaillée du produit.
      * @param  float  $prixUnitaire  Le prix d'une unité de produit (en FCFA).
@@ -24,12 +24,12 @@ class Produit
      * @param  string  $unite  L'unité de mesure du produit (ex: kg, régime, sac).
      */
     public function __construct(
-        private string $id,
         private string $nom,
         private string $description,
         private float $prixUnitaire,
         private int $stock,
         private string $unite,
+        private ?string $id = null
     ) {}
 
     /**

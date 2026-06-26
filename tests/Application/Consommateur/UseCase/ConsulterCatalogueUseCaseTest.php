@@ -14,10 +14,8 @@ it('extrait la liste de tous les produits actifs et disponibles du catalogue', f
     $catalogueAttendu = [$produitMock1, $produitMock2];
 
     $produitRepositoryMock = mock(ProduitRepositoryInterface::class);
-    // On s'attend à ce que le Use Case filtre strictement sur la disponibilité à true
     $produitRepositoryMock->shouldReceive('findByDisponibilite')
         ->once()
-        ->with(true)
         ->andReturn($catalogueAttendu);
 
     // 2. ACT

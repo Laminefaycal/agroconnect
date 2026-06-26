@@ -26,12 +26,19 @@ interface ProduitRepositoryInterface
     public function findAll(): array;
 
     /**
+     * Récupère l'intégralité des produits disponibles dans le catalogue AgroConnect.
+     *
+     * @return array Liste de toutes les entités Produit.
+     */
+    public function findByDisponibilite(): array;
+
+    /**
      * Filtre et recherche les produits par mots-clés (ex: nom, catégorie ou description).
      *
-     * @param  string  $keyword  Le mot-clé saisi par l'utilisateur.
+     * @param  string|null  $keyword  Le mot-clé saisi par l'utilisateur.
      * @return array La liste des entités Produit correspondantes.
      */
-    public function search(string $keyword): array;
+    public function search(?string $keyword): array;
 
     /**
      * Sauvegarde un nouveau produit ou met à jour les informations d'un produit existant.

@@ -3,6 +3,7 @@
 namespace App\Application\Agriculteur\UseCase;
 
 use App\Domain\Commande\CommandeRepositoryInterface;
+use App\Domain\Commande\StatutCommande;
 
 class ConsulterCommandesRecuesUseCase
 {
@@ -21,10 +22,9 @@ class ConsulterCommandesRecuesUseCase
 
     $commandes = $this->commandeRepository->findByAgriculteurId($agriculteurId);
 
-    // array_values permet de remettre les clés à zéro [0, 1] après le filtrage
     return array_values(array_filter(
         $commandes,
-        fn($commande) => $commande->getStatut()->value !== 'TERMINEE' // 💡 On compare des chaînes pures (.value)
+        fn($commande) => $commande->getStatut()->value !== StatutCommande::TERMINEE->value
     ));
 }
  }

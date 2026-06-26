@@ -24,6 +24,6 @@ class ConsulterCatalogueUseCase
     public function execute(): array
     {
         // Logique métier : On ne récupère que les produits disponibles/en stock
-        return $this->produitRepository->findByDisponibilite(true);
+        return $this->produitRepository->findByDisponibilite();
     }
 }
