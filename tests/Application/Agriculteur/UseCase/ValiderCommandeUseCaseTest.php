@@ -2,139 +2,182 @@
 
 namespace Tests\Application\Agriculteur\UseCase;
 
+use App\Application\Agriculteur\DTO\ValiderCommandeDto;
 use App\Application\Agriculteur\UseCase\ValiderCommandeUseCase;
-use App\Application\Agriculteur\Dto\ValiderCommandeDto;
-use App\Domain\Commande\CommandeRepositoryInterface;
-use App\Domain\Transporteur\TransporteurRepositoryInterface;
-use App\Domain\Livraison\LivraisonRepositoryInterface;
-use App\Domain\Service\ServiceLivraison;
 use App\Domain\Commande\Commande;
-use App\Domain\Transporteur\Transporteur;
+use App\Domain\Commande\CommandeRepositoryInterface;
+use App\Domain\Commande\ModeLivraison;
+use App\Domain\Commande\StatutCommande;
 use App\Domain\Livraison\Livraison;
+use App\Domain\Livraison\LivraisonRepositoryInterface;
+use App\Domain\Services\ServiceLivraison;
+use App\Domain\Transporteur\Transporteur;
+use App\Domain\Transporteur\TransporteurRepositoryInterface;
+use Mockery as m;
 
-it('valide la commande et planifie la livraison avec succès', function () {
-    // 1. ARRANGEMENT
-    $dto = mock(ValiderCommandeDto::class);
-    $dto->commandeId = 'cmd-abc-123';
+beforeEach(function () {
+    $this->commandeRepository = m::mock(CommandeRepositoryInterface::class);
+    $this->transporteurRepository = m::mock(TransporteurRepositoryInterface::class);
+    $this->livraisonRepository = m::mock(LivraisonRepositoryInterface::class);
+    $this->serviceLivraison = m::mock(ServiceLivraison::class);
 
-    // Mock de la commande
-    $commandeMock = mock(Commande::class);
-    $commandeMock->shouldReceive('estEnAttente')->once()->andReturn(true);
-    $commandeMock->shouldReceive('valider')->once();
-
-    // Mock du transporteur
-    $transporteurMock = mock(Transporteur::class);
-
-    // Mock de la livraison générée par le domaine
-    $livraisonMock = mock(Livraison::class);
-
-    // Mocks des Repositories et Services
-    $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
-    $commandeRepositoryMock->shouldReceive('findById')->once()->with($dto->commandeId)->andReturn($commandeMock);
-    $commandeRepositoryMock->shouldReceive('save')->once()->with($commandeMock);
-
-    $transporteurRepositoryMock = mock(TransporteurRepositoryInterface::class);
-    $transporteurRepositoryMock->shouldReceive('trouverDisponible')->once()->andReturn($transporteurMock);
-
-    $serviceLivraisonMock = mock(ServiceLivraison::class);
-    $serviceLivraisonMock->shouldReceive('creerLivraison')
-        ->once()
-        ->with($commandeMock, $transporteurMock)
-        ->andReturn($livraisonMock);
-
-    $livraisonRepositoryMock = mock(LivraisonRepositoryInterface::class);
-    $livraisonRepositoryMock->shouldReceive('save')->once()->with($livraisonMock);
-
-    // 2. ACT
-    $useCase = new ValiderCommandeUseCase(
-        $commandeRepositoryMock,
-        $transporteurRepositoryMock,
-        $livraisonRepositoryMock,
-        $serviceLivraisonMock
+    $this->useCase = new ValiderCommandeUseCase(
+        $this->commandeRepository,
+        $this->transporteurRepository,
+        $this->livraisonRepository,
+        $this->serviceLivraison,
     );
-    $useCase->execute($dto);
+});
 
-    // 3. ASSERT
-    expect(true)->toBeTrue();
+it('valide une commande avec un transporteur', function () {
+    $commandeId = 'cmd-123';
+    $transporteurId = 'tr-456';
+    $commande = m::mock(Commande::class);
+    $commande->shouldReceive('getId')->once()->andReturn($commandeId);
+    $commande->shouldReceive('getStatut')->once()->andReturn(StatutCommande::EN_ATTENTE_VALIDATION);
+    $commande->shouldReceive('valider')->once();
+    $commande->shouldReceive('choisirModeLivraison')->with(ModeLivraison::TRANSPORTEUR)->once();
+    $commande->shouldReceive('assignerTransporteur')->with(m::type(Transporteur::class))->once();
+
+    $transporteur = m::mock(Transporteur::class);
+
+    $dto = new ValiderCommandeDto(
+        commandeId: $commandeId,
+        estDisponible: true,
+        modeLivraison: ModeLivraison::TRANSPORTEUR,
+        transporteurId: $transporteurId
+    );
+
+    $this->commandeRepository->shouldReceive('findById')->with($commandeId)->once()->andReturn($commande);
+    $this->transporteurRepository->shouldReceive('findById')->with($transporteurId)->once()->andReturn($transporteur);
+
+    $this->commandeRepository->shouldReceive('save')->with($commande)->once();
+    $this->livraisonRepository->shouldReceive('save')->with(m::type(Livraison::class))->once();
+
+    $this->serviceLivraison->shouldReceive('affecterTransporteur')
+        ->with(m::type(Livraison::class), $transporteur)
+        ->once();
+
+    $this->useCase->execute($dto);
+});
+
+it('valide une commande avec livraison par agriculteur (sans transporteur)', function () {
+    $commandeId = 'cmd-123';
+    $commande = m::mock(Commande::class);
+    $commande->shouldReceive('getId')->once()->andReturn($commandeId);
+    $commande->shouldReceive('getStatut')->once()->andReturn(StatutCommande::EN_ATTENTE_VALIDATION);
+    $commande->shouldReceive('valider')->once();
+    $commande->shouldReceive('choisirModeLivraison')->with(ModeLivraison::AGRICULTEUR)->once();
+    $commande->shouldReceive('assignerTransporteur')->never();
+
+    $dto = new ValiderCommandeDto(
+        commandeId: $commandeId,
+        estDisponible: true,
+        modeLivraison: ModeLivraison::AGRICULTEUR,
+    );
+
+    $this->commandeRepository->shouldReceive('findById')->with($commandeId)->once()->andReturn($commande);
+    $this->commandeRepository->shouldReceive('save')->with($commande)->once();
+    $this->livraisonRepository->shouldReceive('save')->with(m::type(Livraison::class))->once();
+
+    $this->serviceLivraison->shouldReceive('affecterTransporteur')->never();
+
+    $this->useCase->execute($dto);
 });
 
 it('lève une exception si la commande est introuvable', function () {
-    // 1. ARRANGEMENT
-    $dto = mock(ValiderCommandeDto::class);
-    $dto->commandeId = 'cmd-inexistante';
-
-    $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
-    $commandeRepositoryMock->shouldReceive('findById')->once()->with($dto->commandeId)->andReturn(null);
-
-    $transporteurRepositoryMock = mock(TransporteurRepositoryInterface::class);
-    $livraisonRepositoryMock = mock(LivraisonRepositoryInterface::class);
-    $serviceLivraisonMock = mock(ServiceLivraison::class);
-
-    // 2. ACT & ASSERT
-    $useCase = new ValiderCommandeUseCase(
-        $commandeRepositoryMock,
-        $transporteurRepositoryMock,
-        $livraisonRepositoryMock,
-        $serviceLivraisonMock
+    $dto = new ValiderCommandeDto(
+        commandeId: 'unknown',
+        estDisponible: true,
+        modeLivraison: ModeLivraison::AGRICULTEUR,
     );
 
-    expect(fn() => $useCase->execute($dto))
-        ->toThrow(\Exception::class, 'Commande introuvable.');
+    $this->commandeRepository->shouldReceive('findById')->with('unknown')->once()->andReturn(null);
+
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage("Commande 'unknown' introuvable.");
+
+    $this->useCase->execute($dto);
 });
 
-it('lève une exception si la commande a déjà été traitée', function () {
-    // 1. ARRANGEMENT
-    $dto = mock(ValiderCommandeDto::class);
-    $dto->commandeId = 'cmd-deja-traitee';
+it('lève une exception si le statut de la commande n\'est pas EN_ATTENTE_VALIDATION', function () {
+    $commandeId = 'cmd-123';
+    $commande = m::mock(Commande::class);
+    $commande->shouldReceive('getStatut')->once()->andReturn(StatutCommande::VALIDEE);
 
-    $commandeMock = mock(Commande::class);
-    $commandeMock->shouldReceive('estEnAttente')->once()->andReturn(false); // 💡 Déjà traitée
-
-    $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
-    $commandeRepositoryMock->shouldReceive('findById')->once()->with($dto->commandeId)->andReturn($commandeMock);
-
-    $transporteurRepositoryMock = mock(TransporteurRepositoryInterface::class);
-    $livraisonRepositoryMock = mock(LivraisonRepositoryInterface::class);
-    $serviceLivraisonMock = mock(ServiceLivraison::class);
-
-    // 2. ACT & ASSERT
-    $useCase = new ValiderCommandeUseCase(
-        $commandeRepositoryMock,
-        $transporteurRepositoryMock,
-        $livraisonRepositoryMock,
-        $serviceLivraisonMock
+    $dto = new ValiderCommandeDto(
+        commandeId: $commandeId,
+        estDisponible: true,
+        modeLivraison: ModeLivraison::AGRICULTEUR,
     );
 
-    expect(fn() => $useCase->execute($dto))
-        ->toThrow(\DomainException::class, 'Commande déjà traitée.');
+    $this->commandeRepository->shouldReceive('findById')->with($commandeId)->once()->andReturn($commande);
+
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Seules les commandes en attente de validation peuvent être validées.');
+
+    $this->useCase->execute($dto);
 });
 
-it('lève une exception si aucun transporteur n’est disponible', function () {
-    // 1. ARRANGEMENT
-    $dto = mock(ValiderCommandeDto::class);
-    $dto->commandeId = 'cmd-valide';
+it('lève une exception si la commande n\'est pas disponible', function () {
+    $commandeId = 'cmd-123';
+    $commande = m::mock(Commande::class);
+    $commande->shouldReceive('getStatut')->once()->andReturn(StatutCommande::EN_ATTENTE_VALIDATION);
 
-    $commandeMock = mock(Commande::class);
-    $commandeMock->shouldReceive('estEnAttente')->once()->andReturn(true);
-
-    $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
-    $commandeRepositoryMock->shouldReceive('findById')->once()->with($dto->commandeId)->andReturn($commandeMock);
-
-    $transporteurRepositoryMock = mock(TransporteurRepositoryInterface::class);
-    // 💡 Aucun chauffeur libre en bdd
-    $transporteurRepositoryMock->shouldReceive('trouverDisponible')->once()->andReturn(null);
-
-    $livraisonRepositoryMock = mock(LivraisonRepositoryInterface::class);
-    $serviceLivraisonMock = mock(ServiceLivraison::class);
-
-    // 2. ACT & ASSERT
-    $useCase = new ValiderCommandeUseCase(
-        $commandeRepositoryMock,
-        $transporteurRepositoryMock,
-        $livraisonRepositoryMock,
-        $serviceLivraisonMock
+    $dto = new ValiderCommandeDto(
+        commandeId: $commandeId,
+        estDisponible: false,
+        modeLivraison: ModeLivraison::AGRICULTEUR,
     );
 
-    expect(fn() => $useCase->execute($dto))
-        ->toThrow(\DomainException::class, 'Aucun transporteur disponible.');
+    $this->commandeRepository->shouldReceive('findById')->with($commandeId)->once()->andReturn($commande);
+
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Seules les commandes disponibles peuvent être validées.');
+
+    $this->useCase->execute($dto);
+});
+
+it('lève une exception si le mode est TRANSPORTEUR mais transporteurId manquant', function () {
+    $commandeId = 'cmd-123';
+    $commande = m::mock(Commande::class);
+    $commande->shouldReceive('getStatut')->once()->andReturn(StatutCommande::EN_ATTENTE_VALIDATION);
+
+    $dto = new ValiderCommandeDto(
+        commandeId: $commandeId,
+        estDisponible: true,
+        modeLivraison: ModeLivraison::TRANSPORTEUR,
+        transporteurId: null,
+    );
+
+    $this->commandeRepository->shouldReceive('findById')->with($commandeId)->once()->andReturn($commande);
+
+    $this->transporteurRepository->shouldReceive('findById')->never();
+
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage('Le mode TRANSPORTEUR nécessite un identifiant de transporteur.');
+
+    $this->useCase->execute($dto);
+});
+
+it('lève une exception si le transporteur est introuvable', function () {
+    $commandeId = 'cmd-123';
+    $transporteurId = 'tr-unknown';
+    $commande = m::mock(Commande::class);
+    $commande->shouldReceive('getStatut')->once()->andReturn(StatutCommande::EN_ATTENTE_VALIDATION);
+
+    $dto = new ValiderCommandeDto(
+        commandeId: $commandeId,
+        estDisponible: true,
+        modeLivraison: ModeLivraison::TRANSPORTEUR,
+        transporteurId: $transporteurId,
+    );
+
+    $this->commandeRepository->shouldReceive('findById')->with($commandeId)->once()->andReturn($commande);
+    $this->transporteurRepository->shouldReceive('findById')->with($transporteurId)->once()->andReturn(null);
+
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage("Transporteur '{$transporteurId}' introuvable.");
+
+    $this->useCase->execute($dto);
 });

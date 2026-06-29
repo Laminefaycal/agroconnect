@@ -21,10 +21,6 @@ class SupprimerProduitUseCase
         throw new \Exception('Produit introuvable.');
     }
 
-    if ($produit->aDesCommandesEnCours()) {
-        throw new \DomainException( 'Impossible de supprimer ce produit.' );
-    }
-
     $this->produitRepository->delete($produitId);
 }
 }

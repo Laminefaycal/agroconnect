@@ -3,63 +3,45 @@
 namespace Tests\Application\Agriculteur\UseCase;
 
 use App\Application\Agriculteur\UseCase\MettreAJourStockUseCase;
-use App\Domain\Produit\ProduitRepositoryInterface;
-use Exception;
-
-// Note : Remplacez par le vrai FQCN de votre entité de domaine Produit
 use App\Domain\Produit\Produit;
+use App\Domain\Produit\ProduitRepositoryInterface;
+use Mockery as m;
 
 beforeEach(function () {
-    // Création du mock pour le repository de produit
-    $this->produitRepository = mock(ProduitRepositoryInterface::class);
-
-    // Instanciation du Use Case avec le mock injecté
-   $this->useCase = new MettreAJourStockUseCase($this->produitRepository);
+    $this->produitRepository = m::mock(ProduitRepositoryInterface::class);
+    $this->useCase = new MettreAJourStockUseCase($this->produitRepository);
 });
 
-it('met à jour le stock et sauvegarde le produit avec succès', function () {
-    // Arrange
+it('met à jour le stock d’un produit existant', function () {
     $produitId = 'prod-123';
-    $updateData = ['quantite' => 50];
+    $nouvelleQuantite = 50;
 
-    // Création d'un mock pour l'entité Produit pour intercepter l'appel à update()
-  $produitMock = mock(\App\Domain\Produit\Produit::class);
-    $produitMock->shouldReceive('update')
-        ->once()
-        ->with($updateData);
+    $produit = m::mock(Produit::class);
+    $produit->shouldReceive('setStock')->with($nouvelleQuantite)->once();
 
-    // Configuration des attentes du repository
     $this->produitRepository->shouldReceive('findById')
-        ->once()
         ->with($produitId)
-        ->andReturn($produitMock);
+        ->once()
+        ->andReturn($produit);
 
     $this->produitRepository->shouldReceive('save')
-        ->once()
-        ->with($produitMock);
+        ->with($produit)
+        ->once();
 
-    // Act & Assert
-    $this->useCase->execute($produitId, $updateData);
-
-    // Pest s'assure automatiquement via Mockery que toutes les attentes (shouldReceive) ont été honorées
+    $this->useCase->execute($produitId, $nouvelleQuantite);
 });
 
-it('lève une exception si le produit n\'existe pas', function () {
-    // Arrange
-    $produitId = 'prod-invalide';
-    $updateData = ['quantite' => 10];
+it('lève une exception si le produit n’existe pas', function () {
+    $produitId = 'unknown';
+    $nouvelleQuantite = 10;
 
-    // Le repository retourne null si le produit n'est pas trouvé
     $this->produitRepository->shouldReceive('findById')
-        ->once()
         ->with($produitId)
+        ->once()
         ->andReturn(null);
 
-    // On s'assure que save() ne sera jamais appelé dans ce scénario
-    $this->produitRepository->shouldReceive('save')
-        ->never();
+    $this->expectException(\InvalidArgumentException::class);
+    $this->expectExceptionMessage("Produit 'unknown' introuvable.");
 
-    // Act & Assert
-    expect(fn() => $this->useCase->execute($produitId, $updateData))
-        ->toThrow(Exception::class, "Produit introuvable.");
+    $this->useCase->execute($produitId, $nouvelleQuantite);
 });
