@@ -3,8 +3,8 @@
 namespace Tests\Application\Agriculteur\UseCase;
 
 use App\Application\Agriculteur\UseCase\ConsulterCommandesRecuesUseCase;
-use App\Domain\Commande\CommandeRepositoryInterface;
 use App\Domain\Commande\Commande;
+use App\Domain\Commande\CommandeRepositoryInterface;
 use App\Domain\Commande\StatutCommande;
 
 it('récupère les commandes reçues et filtre les commandes terminées', function () {

@@ -3,8 +3,8 @@
 namespace Tests\Application\Agriculteur\UseCase;
 
 use App\Application\Agriculteur\UseCase\ModifierProduitUseCase;
-use App\Domain\Produit\ProduitRepositoryInterface;
 use App\Domain\Produit\Produit;
+use App\Domain\Produit\ProduitRepositoryInterface;
 use InvalidArgumentException;
 use Mockery;
 
@@ -18,11 +18,11 @@ describe('ModifierProduitUseCase', function () {
     it('modifie un produit existant et le persiste', function () {
         $produitId = 'prod-123';
         $data = [
-            'nom'          => 'Tomates bio',
-            'description'  => 'Tomates fraîches du jardin',
+            'nom' => 'Tomates bio',
+            'description' => 'Tomates fraîches du jardin',
             'prixUnitaire' => 3.99,
-            'stock'        => 75,
-            'unite'        => 'kg',
+            'stock' => 75,
+            'unite' => 'kg',
         ];
 
         $produitMock = Mockery::mock(Produit::class);
@@ -55,7 +55,7 @@ describe('ModifierProduitUseCase', function () {
             ->andReturnNull();
         $this->repositoryMock->shouldReceive('save')->never();
 
-        expect(fn() => $this->useCase->execute($produitId, $data))
+        expect(fn () => $this->useCase->execute($produitId, $data))
             ->toThrow(InvalidArgumentException::class, 'Produit non trouvé.');
     });
 
@@ -63,7 +63,7 @@ describe('ModifierProduitUseCase', function () {
         $produitId = 'prod-456';
         $data = [
             'prixUnitaire' => 12.50,
-            'stock'        => 100,
+            'stock' => 100,
         ];
 
         $produitMock = Mockery::mock(Produit::class);

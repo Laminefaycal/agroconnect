@@ -3,8 +3,8 @@
 namespace Test\Application\Transporteur\UseCase;
 
 use App\Application\Transporteur\UseCase\GetLivraisonDetailsUseCase;
-use App\Domain\Transporteur\Repository\LivraisonRepositoryInterface;
 use App\Domain\Transporteur\Entity\Livraison;
+use App\Domain\Transporteur\Repository\LivraisonRepositoryInterface;
 use Exception; // Ajouté ici pour corriger le bug de l'exception
 
 it('retourne les details complets d une livraison existante', function () {
@@ -37,6 +37,6 @@ it('leve une exception si la livraison n existe pas', function () {
     $useCase = new GetLivraisonDetailsUseCase($repositoryMock);
 
     // Act & Assert
-    expect(fn() => $useCase->execute('LIV-INVALIDE'))
-        ->toThrow(Exception::class, "Livraison non trouvée.");
+    expect(fn () => $useCase->execute('LIV-INVALIDE'))
+        ->toThrow(Exception::class, 'Livraison non trouvée.');
 });

@@ -3,8 +3,8 @@
 namespace Test\Application\Consommateur\UseCase;
 
 use App\Application\Consommateur\UseCase\RechercheProduitUseCase;
-use App\Domain\Produit\ProduitRepositoryInterface;
 use App\Domain\Produit\Produit;
+use App\Domain\Produit\ProduitRepositoryInterface;
 
 it('retourne la liste des produits correspondants au mot-clé nettoyé', function () {
     // 1. ARRANGEMENT
@@ -39,7 +39,7 @@ it('lève une exception de type InvalidArgumentException si le mot-clé est vide
     $useCase = new RechercheProduitUseCase($produitRepositoryMock);
 
     // 2. ACT & ASSERT
-    expect(fn() => $useCase->execute($keywordInvalide))
+    expect(fn () => $useCase->execute($keywordInvalide))
         ->toThrow(\InvalidArgumentException::class, 'Le mot-clé de recherche ne peut pas être vide.');
 })->with([
     'chaîne totalement vide' => '',

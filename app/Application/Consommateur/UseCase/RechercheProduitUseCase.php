@@ -10,7 +10,7 @@ use App\Domain\Produit\ProduitRepositoryInterface;
 class RechercheProduitUseCase
 {
     /**
-     * @param ProduitRepositoryInterface $produitRepository Le dépôt des produits.
+     * @param  ProduitRepositoryInterface  $produitRepository  Le dépôt des produits.
      */
     public function __construct(
         private ProduitRepositoryInterface $produitRepository
@@ -19,8 +19,9 @@ class RechercheProduitUseCase
     /**
      * Recherche des produits correspondants au mot-clé fourni.
      *
-     * @param string $keyword Le terme recherché (ex: "Manioc", "Banane").
+     * @param  string  $keyword  Le terme recherché (ex: "Manioc", "Banane").
      * @return array Tableau des produits correspondants.
+     *
      * @throws \InvalidArgumentException Si le mot-clé est vide.
      */
     public function execute(string $keyword): array

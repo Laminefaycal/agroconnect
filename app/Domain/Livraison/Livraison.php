@@ -9,10 +9,15 @@ use DateTime;
 class Livraison
 {
     private ?string $id;
+
     private string $commandeId;
+
     private ?DateTime $datePriseEnCharge;
+
     private ?DateTime $dateLivraisonEffective;
+
     private StatutLivraison $statut;
+
     private ?Transporteur $transporteur = null;
 
     public function __construct(
@@ -44,7 +49,7 @@ class Livraison
     public function confirmerLivraison(): void
     {
         $this->statut = StatutLivraison::LIVREE;
-        $this->dateLivraisonEffective = new DateTime();
+        $this->dateLivraisonEffective = new DateTime;
     }
 
     public function assignerTransporteur(Transporteur $transporteur): void

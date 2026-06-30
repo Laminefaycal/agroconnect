@@ -13,14 +13,14 @@ class SupprimerProduitUseCase
         $this->produitRepository = $produitRepository;
     }
 
-   public function execute(string $produitId): void
-{
-    $produit = $this->produitRepository->findById($produitId);
+    public function execute(string $produitId): void
+    {
+        $produit = $this->produitRepository->findById($produitId);
 
-    if (!$produit) {
-        throw new \Exception('Produit introuvable.');
+        if (! $produit) {
+            throw new \Exception('Produit introuvable.');
+        }
+
+        $this->produitRepository->delete($produitId);
     }
-
-    $this->produitRepository->delete($produitId);
-}
 }

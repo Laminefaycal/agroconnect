@@ -3,18 +3,17 @@
 namespace Tests\Domain\Commande;
 
 use App\Domain\Commande\Commande;
-use App\Domain\Commande\StatutCommande;
-use App\Domain\Commande\ModeLivraison;
 use App\Domain\Commande\LigneCommande;
+use App\Domain\Commande\ModeLivraison;
+use App\Domain\Commande\StatutCommande;
 use App\Domain\Livraison\Livraison;
-use App\Domain\Livraison\StatutLivraison;
 use App\Domain\Transporteur\Transporteur;
 use DateTime;
 use InvalidArgumentException;
 use Mockery;
 
 it('peut être instanciée correctement avec ses valeurs initiales', function () {
-    $date = new DateTime();
+    $date = new DateTime;
     $commande = new Commande('CMD-123', $date, StatutCommande::EN_ATTENTE_VALIDATION, ModeLivraison::TRANSPORTEUR);
 
     expect($commande->getId())->toBe('CMD-123')
@@ -26,7 +25,7 @@ it('peut être instanciée correctement avec ses valeurs initiales', function ()
 });
 
 it('peut être validée avec succès si elle est en attente de validation', function () {
-    $commande = new Commande('CMD-123', new DateTime(), StatutCommande::EN_ATTENTE_VALIDATION, ModeLivraison::TRANSPORTEUR);
+    $commande = new Commande('CMD-123', new DateTime, StatutCommande::EN_ATTENTE_VALIDATION, ModeLivraison::TRANSPORTEUR);
 
     $commande->valider();
 
@@ -34,14 +33,14 @@ it('peut être validée avec succès si elle est en attente de validation', func
 });
 
 it('lève une exception si on valide une commande qui n\'est pas en attente de validation', function () {
-    $commande = new Commande('CMD-123', new DateTime(), StatutCommande::VALIDEE, ModeLivraison::TRANSPORTEUR);
+    $commande = new Commande('CMD-123', new DateTime, StatutCommande::VALIDEE, ModeLivraison::TRANSPORTEUR);
 
-    expect(fn() => $commande->valider())
+    expect(fn () => $commande->valider())
         ->toThrow(InvalidArgumentException::class, 'Seule une commande en attente peut être validée.');
 });
 
 it('peut changer son mode de livraison', function () {
-    $commande = new Commande('CMD-123', new DateTime(), StatutCommande::EN_ATTENTE_VALIDATION, ModeLivraison::TRANSPORTEUR);
+    $commande = new Commande('CMD-123', new DateTime, StatutCommande::EN_ATTENTE_VALIDATION, ModeLivraison::TRANSPORTEUR);
 
     $commande->choisirModeLivraison(ModeLivraison::AGRICULTEUR);
 
@@ -49,7 +48,7 @@ it('peut changer son mode de livraison', function () {
 });
 
 it('peut ajouter des lignes de commande', function () {
-    $commande = new Commande('CMD-123', new DateTime(), StatutCommande::EN_ATTENTE_VALIDATION, ModeLivraison::TRANSPORTEUR);
+    $commande = new Commande('CMD-123', new DateTime, StatutCommande::EN_ATTENTE_VALIDATION, ModeLivraison::TRANSPORTEUR);
     $ligneMock = mock(LigneCommande::class);
 
     $commande->ajouterLigne($ligneMock);
@@ -57,13 +56,14 @@ it('peut ajouter des lignes de commande', function () {
     expect($commande->getLignes())->toHaveCount(1)
         ->and($commande->getLignes()[0])->toBe($ligneMock);
 
-});it('utilise la livraison existante pour y assigner le transporteur', function () {
+});
+it('utilise la livraison existante pour y assigner le transporteur', function () {
     // 1. Arrange
     $commande = Mockery::mock(Commande::class)->makePartial();
     $commande->shouldReceive('getModeLivraison')->andReturn(ModeLivraison::TRANSPORTEUR);
 
     // 💡 LA CORRECTION : On redonne la vraie classe, Mockery va générer le bon type
-    $livraisonMock = Mockery::mock(\App\Domain\Livraison\Livraison::class);
+    $livraisonMock = Mockery::mock(Livraison::class);
     $transporteurMock = Mockery::mock(Transporteur::class);
 
     // Configuration des comportements
@@ -82,9 +82,9 @@ it('peut ajouter des lignes de commande', function () {
         ->and($commande->getStatut())->toBe(StatutCommande::EN_LIVRAISON);
 });
 it('lève une exception si on assigne un transporteur alors que le mode est AGRICULTEUR', function () {
-    $commande = new Commande('CMD-123', new DateTime(), StatutCommande::VALIDEE, ModeLivraison::AGRICULTEUR);
+    $commande = new Commande('CMD-123', new DateTime, StatutCommande::VALIDEE, ModeLivraison::AGRICULTEUR);
     $transporteurMock = mock(Transporteur::class);
 
-    expect(fn() => $commande->assignerTransporteur($transporteurMock))
+    expect(fn () => $commande->assignerTransporteur($transporteurMock))
         ->toThrow(InvalidArgumentException::class, 'Impossible d’assigner un transporteur en mode livraison par agriculteur.');
 });

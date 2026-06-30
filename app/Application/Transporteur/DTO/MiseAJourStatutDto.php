@@ -2,59 +2,37 @@
 
 namespace App\Application\Transporteur\DTO;
 
-/**
- * Class MiseAJourStatutDto
- *
- * Objet de transfert de données (DTO) utilisé pour la mise à jour
- * du statut d'une livraison.
- *
- * @package App\Application\Transporteur\DTO
- */
+use App\Domain\Livraison\StatutLivraison;
+use InvalidArgumentException;
+
 class MiseAJourStatutDto
 {
-    /**
-     * L'identifiant unique de la livraison.
-     *
-     * @var string
-     */
     private string $livraisonId;
 
-    /**
-     * Le nouveau statut à appliquer à la livraison.
-     *
-     * @var mixed Instance de l'énumération StatutLivraison ou string.
-     */
-    private $statut;
+    private string $statut; // On attend une string, on la convertira en enum
 
-    /**
-     * Constructeur de la classe MiseAJourStatutDto.
-     *
-     * @param string $livraisonId L'identifiant de la livraison.
-     * @param mixed  $statut      Le nouveau statut de la livraison.
-     */
-    public function __construct(string $livraisonId, $statut)
+    public function __construct(string $livraisonId, string $statut)
     {
         $this->livraisonId = $livraisonId;
         $this->statut = $statut;
     }
 
-    /**
-     * Récupère l'identifiant de la livraison.
-     *
-     * @return string
-     */
     public function getLivraisonId(): string
     {
         return $this->livraisonId;
     }
 
     /**
-     * Récupère le nouveau statut de la livraison.
+     * Convertit la string en enum StatutLivraison
      *
-     * @return mixed
+     * @throws InvalidArgumentException si la valeur n'est pas valide
      */
-    public function getStatut()
+    public function getStatutEnum(): StatutLivraison
     {
-        return $this->statut;
+        try {
+            return StatutLivraison::from($this->statut); // si l'enum supporte from()
+        } catch (\ValueError $e) {
+            throw new InvalidArgumentException('Statut invalide : '.$this->statut);
+        }
     }
 }

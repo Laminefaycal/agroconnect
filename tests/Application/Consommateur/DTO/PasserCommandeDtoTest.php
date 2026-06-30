@@ -2,8 +2,8 @@
 
 namespace Tests\Application\Consommateur\DTO;
 
-use App\Application\Consommateur\DTO\PasserCommandeDto;
 use App\Application\Consommateur\DTO\LigneCommandeDto;
+use App\Application\Consommateur\DTO\PasserCommandeDto;
 
 it('peut être instancié avec des arguments nommés et retourne les bonnes valeurs', function () {
     // Arrange

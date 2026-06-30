@@ -2,10 +2,9 @@
 
 namespace Test\Application\Consommateur\UseCase;
 
-
 use App\Application\Consommateur\UseCase\ConsulterCatalogueUseCase;
-use App\Domain\Produit\ProduitRepositoryInterface;
 use App\Domain\Produit\Produit;
+use App\Domain\Produit\ProduitRepositoryInterface;
 
 it('extrait la liste de tous les produits actifs et disponibles du catalogue', function () {
     // 1. ARRANGEMENT

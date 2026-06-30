@@ -11,7 +11,6 @@ use App\Domain\Livraison\Livraison;
 use App\Domain\Livraison\LivraisonRepositoryInterface;
 use App\Domain\Livraison\StatutLivraison;
 use App\Domain\Services\ServiceLivraison;
-use App\Domain\Transporteur\Transporteur;
 use App\Domain\Transporteur\TransporteurRepositoryInterface;
 
 class ValiderCommandeUseCase
@@ -21,25 +20,24 @@ class ValiderCommandeUseCase
         private TransporteurRepositoryInterface $transporteurRepository,
         private LivraisonRepositoryInterface $livraisonRepository,
         private ServiceLivraison $serviceLivraison,
-    ) {
-    }
+    ) {}
 
     public function execute(ValiderCommandeDto $dto): void
     {
         $commande = $this->commandeRepository->findById($dto->commandeId);
-        if (!$commande) {
+        if (! $commande) {
             throw new \InvalidArgumentException("Commande '{$dto->commandeId}' introuvable.");
         }
 
         if ($commande->getStatut() !== StatutCommande::EN_ATTENTE_VALIDATION) {
             throw new \InvalidArgumentException(
-                "Seules les commandes en attente de validation peuvent être validées."
+                'Seules les commandes en attente de validation peuvent être validées.'
             );
         }
 
-        if (!$dto->estDisponible) {
+        if (! $dto->estDisponible) {
             throw new \InvalidArgumentException(
-                "Seules les commandes disponibles peuvent être validées."
+                'Seules les commandes disponibles peuvent être validées.'
             );
         }
 
@@ -47,11 +45,11 @@ class ValiderCommandeUseCase
         if ($dto->modeLivraison === ModeLivraison::TRANSPORTEUR) {
             if (empty($dto->transporteurId)) {
                 throw new \InvalidArgumentException(
-                    "Le mode TRANSPORTEUR nécessite un identifiant de transporteur."
+                    'Le mode TRANSPORTEUR nécessite un identifiant de transporteur.'
                 );
             }
             $transporteur = $this->transporteurRepository->findById($dto->transporteurId);
-            if (!$transporteur) {
+            if (! $transporteur) {
                 throw new \InvalidArgumentException(
                     "Transporteur '{$dto->transporteurId}' introuvable."
                 );
@@ -81,6 +79,7 @@ class ValiderCommandeUseCase
             statut: StatutLivraison::ASSIGNEE,
             transporteur: null
         );
+
         return $livraison;
     }
 }

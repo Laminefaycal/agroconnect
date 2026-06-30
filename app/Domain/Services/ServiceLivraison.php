@@ -33,7 +33,7 @@ class ServiceLivraison
 
         $commande = $this->commandeRepository->findByLivraisonId($livraison->getId());
         if (! $commande) {
-            throw new \RuntimeException("Aucune commande associée à cette livraison.");
+            throw new \RuntimeException('Aucune commande associée à cette livraison.');
         }
 
         if ($commande->getModeLivraison() === ModeLivraison::AGRICULTEUR) {

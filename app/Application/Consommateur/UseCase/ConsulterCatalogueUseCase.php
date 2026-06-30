@@ -10,7 +10,7 @@ use App\Domain\Produit\ProduitRepositoryInterface;
 class ConsulterCatalogueUseCase
 {
     /**
-     * @param ProduitRepositoryInterface $produitRepository Le dépôt des produits.
+     * @param  ProduitRepositoryInterface  $produitRepository  Le dépôt des produits.
      */
     public function __construct(
         private ProduitRepositoryInterface $produitRepository

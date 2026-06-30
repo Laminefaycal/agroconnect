@@ -14,21 +14,20 @@ class MettreAJourStockUseCase
 {
     public function __construct(
         private ProduitRepositoryInterface $produitRepository,
-    ) {
-    }
+    ) {}
 
     /**
      * Exécute la mise à jour du stock.
      *
-     * @param string $produitId Identifiant du produit
-     * @param int    $quantite  Nouvelle quantité en stock (peut être 0)
+     * @param  string  $produitId  Identifiant du produit
+     * @param  int  $quantite  Nouvelle quantité en stock (peut être 0)
      *
      * @throws \InvalidArgumentException Si le produit n’existe pas
      */
     public function execute(string $produitId, int $quantite): void
     {
         $produit = $this->produitRepository->findById($produitId);
-        if (!$produit) {
+        if (! $produit) {
             throw new \InvalidArgumentException("Produit '$produitId' introuvable.");
         }
 

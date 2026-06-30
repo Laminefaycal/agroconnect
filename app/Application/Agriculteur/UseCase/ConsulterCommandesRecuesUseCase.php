@@ -15,16 +15,16 @@ class ConsulterCommandesRecuesUseCase
     }
 
     public function execute(string $agriculteurId): array
-{
-    if (empty($agriculteurId)) {
-        throw new \InvalidArgumentException('Identifiant obligatoire.');
+    {
+        if (empty($agriculteurId)) {
+            throw new \InvalidArgumentException('Identifiant obligatoire.');
+        }
+
+        $commandes = $this->commandeRepository->findByAgriculteurId($agriculteurId);
+
+        return array_values(array_filter(
+            $commandes,
+            fn ($commande) => $commande->getStatut()->value !== StatutCommande::TERMINEE->value
+        ));
     }
-
-    $commandes = $this->commandeRepository->findByAgriculteurId($agriculteurId);
-
-    return array_values(array_filter(
-        $commandes,
-        fn($commande) => $commande->getStatut()->value !== StatutCommande::TERMINEE->value
-    ));
 }
- }

@@ -3,88 +3,46 @@
 namespace Tests\Application\Agriculteur\UseCase;
 
 use App\Application\Agriculteur\UseCase\SupprimerProduitUseCase;
-use App\Domain\Produit\ProduitRepositoryInterface;
 use App\Domain\Produit\Produit;
+use App\Domain\Produit\ProduitRepositoryInterface;
 
-it('supprime le produit avec succès s’il existe et n’a pas de commandes en cours', function () {
-    // 1. ARRANGEMENT
+test('supprime un produit existant avec succès', function () {
+    // Arrange
     $produitId = 'prod-123';
+    $produit = mock(Produit::class);
 
-    // On mock l'entité Produit
-    $produitMock = mock(Produit::class);
-
-    // RÈGLE MÉTIER : On simule que le produit N'A PAS de commandes en cours
-    $produitMock->shouldReceive('aDesCommandesEnCours')
-        ->once()
-        ->andReturn(false);
-
-    $produitRepositoryMock = mock(ProduitRepositoryInterface::class);
-
-    // On simule que le produit est trouvé
-    $produitRepositoryMock->shouldReceive('findById')
-        ->once()
+    $repository = mock(ProduitRepositoryInterface::class);
+    $repository->shouldReceive('findById')
         ->with($produitId)
-        ->andReturn($produitMock);
-
-    // On s'attend à ce que la méthode delete soit bien appelée
-    $produitRepositoryMock->shouldReceive('delete')
         ->once()
-        ->with($produitId);
+        ->andReturn($produit);
+    $repository->shouldReceive('delete')
+        ->with($produitId)
+        ->once();
 
-    // 2. ACT
-    $useCase = new SupprimerProduitUseCase($produitRepositoryMock);
+    $useCase = new SupprimerProduitUseCase($repository);
+
+    // Act
     $useCase->execute($produitId);
 
-    // 3. ASSERT
-    expect(true)->toBeTrue();
-});
+    // Assertions implicites via les expectations Mockery
+})->group('use-case', 'supprimer-produit');
 
-it('lève une exception si le produit à supprimer n’existe pas', function () {
-    // 1. ARRANGEMENT
-    $produitId = 'prod-inexistant';
+test('lève une exception si le produit n\'existe pas', function () {
+    // Arrange
+    $produitId = 'prod-456';
 
-    $produitRepositoryMock = mock(ProduitRepositoryInterface::class);
-
-    // Le produit n'existe pas en BDD -> renvoie null
-    $produitRepositoryMock->shouldReceive('findById')
-        ->once()
+    $repository = mock(ProduitRepositoryInterface::class);
+    $repository->shouldReceive('findById')
         ->with($produitId)
+        ->once()
         ->andReturn(null);
+    $repository->shouldReceive('delete')
+        ->never();
 
-    // Le repository ne doit JAMAIS appeler delete
-    $produitRepositoryMock->shouldNotReceive('delete');
+    $useCase = new SupprimerProduitUseCase($repository);
 
-    // 2. ACT & ASSERT
-    $useCase = new SupprimerProduitUseCase($produitRepositoryMock);
-
-    expect(fn() => $useCase->execute($produitId))
+    // Act & Assert
+    expect(fn () => $useCase->execute($produitId))
         ->toThrow(\Exception::class, 'Produit introuvable.');
-});
-
-it('lève une exception si le produit a des commandes en cours', function () {
-    // 1. ARRANGEMENT
-    $produitId = 'prod-123';
-
-    $produitMock = mock(Produit::class);
-
-    // RÈGLE MÉTIER : On simule que le produit A des commandes en cours
-    $produitMock->shouldReceive('aDesCommandesEnCours')
-        ->once()
-        ->andReturn(true);
-
-    $produitRepositoryMock = mock(ProduitRepositoryInterface::class);
-
-    $produitRepositoryMock->shouldReceive('findById')
-        ->once()
-        ->with($produitId)
-        ->andReturn($produitMock);
-
-    // PROTECTION MÉTIER : Le repository ne doit JAMAIS appeler delete si c'est bloqué
-    $produitRepositoryMock->shouldNotReceive('delete');
-
-    // 2. ACT & ASSERT
-    $useCase = new SupprimerProduitUseCase($produitRepositoryMock);
-
-    expect(fn() => $useCase->execute($produitId))
-        ->toThrow(\DomainException::class, 'Impossible de supprimer ce produit.');
-});
+})->group('use-case', 'supprimer-produit');

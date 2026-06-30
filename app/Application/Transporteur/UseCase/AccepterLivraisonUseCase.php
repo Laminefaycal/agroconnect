@@ -3,23 +3,18 @@
 namespace App\Application\Transporteur\UseCase;
 
 use App\Application\Transporteur\DTO\AccepterLivraisonDto;
-use App\Domain\Transporteur\Repository\LivraisonRepositoryInterface;
-use App\Domain\Transporteur\Repository\TransporteurRepositoryInterface;
-use App\Domain\Transporteur\Service\ServiceLivraison; // À adapter selon l'emplacement de votre service
-use Exception;
+use App\Domain\Livraison\LivraisonRepositoryInterface;
+use App\Domain\Livraison\StatutLivraison;
+use App\Domain\Services\ServiceLivraison;
+use App\Domain\Transporteur\TransporteurRepositoryInterface;
+use RuntimeException;
 
 /**
  * Class AccepterLivraisonUseCase
  * * Gère la prise en charge d'une livraison par un transporteur.
- * * @package App\Application\Transporteur\UseCase
  */
 class AccepterLivraisonUseCase
 {
-    /**
-     * @param LivraisonRepositoryInterface $livraisonRepository
-     * @param TransporteurRepositoryInterface $transporteurRepository
-     * @param ServiceLivraison $serviceLivraison
-     */
     public function __construct(
         private LivraisonRepositoryInterface $livraisonRepository,
         private TransporteurRepositoryInterface $transporteurRepository,
@@ -28,26 +23,27 @@ class AccepterLivraisonUseCase
 
     /**
      * Exécute l'acceptation d'une livraison par un transporteur.
-     * * @param AccepterLivraisonDto $dto
-     * @return void
+     *
      * @throws Exception
      */
     public function execute(AccepterLivraisonDto $dto): void
     {
         $livraison = $this->livraisonRepository->findById($dto->getLivraisonId());
-        if (!$livraison) {
-            throw new Exception("Livraison introuvable.");
+        if (! $livraison) {
+            throw new RuntimeException("La livraison avec l'identifiant '{$dto->getLivraisonId()}' n'existe pas.");
         }
 
         $transporteur = $this->transporteurRepository->findById($dto->getTransporteurId());
-        if (!$transporteur) {
-            throw new Exception("Transporteur introuvable.");
+        if (! $transporteur) {
+            throw new RuntimeException("Le transporteur avec l'identifiant '{$dto->getTransporteurId()}' n'existe pas.");
         }
 
-        // Utilisation du service de livraison si nécessaire, ou logique métier directe
-        $livraison->assignerTransporteur($transporteur->getId());
-        $livraison->changerStatut('accepte');
+        if ($livraison->getStatut() !== StatutLivraison::PROPOSEE) {
+            throw new RuntimeException(
+                "La livraison n'est pas proposée aux transporteurs (statut actuel : {$livraison->getStatut()->value})."
+            );
+        }
 
-        $this->livraisonRepository->save($livraison);
+        $this->serviceLivraison->affecterTransporteur($livraison, $transporteur);
     }
 }

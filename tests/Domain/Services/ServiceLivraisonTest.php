@@ -2,15 +2,15 @@
 
 namespace Tests\Domain\Services;
 
-use App\Domain\Services\ServiceLivraison;
 use App\Domain\Commande\CommandeRepositoryInterface;
 use App\Domain\Commande\ModeLivraison;
-use App\Domain\Livraison\Livraison; // Revenir à la vraie classe pour le type-hint
-use App\Domain\Livraison\LivraisonRepositoryInterface;
+use App\Domain\Livraison\Livraison;
+use App\Domain\Livraison\LivraisonRepositoryInterface; // Revenir à la vraie classe pour le type-hint
 use App\Domain\Livraison\StatutLivraison;
+use App\Domain\Services\ServiceLivraison;
+use App\Domain\Services\TransporteurNotificationInterface;
 use App\Domain\Transporteur\Transporteur;
 use App\Domain\Transporteur\TransporteurRepositoryInterface;
-use App\Domain\Services\TransporteurNotificationInterface;
 use RuntimeException;
 use stdClass;
 
@@ -40,7 +40,7 @@ it('lève une exception si aucune commande n\'est associée à la livraison', fu
         ->andReturn(null);
 
     // Act & Assert
-    expect(fn() => $this->serviceLivraison->proposerAuxTransporteurs($livraisonMock))
+    expect(fn () => $this->serviceLivraison->proposerAuxTransporteurs($livraisonMock))
         ->toThrow(RuntimeException::class, 'Aucune commande associée à cette livraison.');
 });
 

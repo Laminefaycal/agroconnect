@@ -3,10 +3,10 @@
 namespace Test\Application\Consommateur\UseCase;
 
 use App\Application\Consommateur\UseCase\SuivreLivraisonUseCase;
-use App\Domain\Commande\Repository\CommandeRepositoryInterface;
-use App\Domain\Livraison\Repository\LivraisonRepositoryInterface;
 use App\Domain\Commande\Commande;
+use App\Domain\Commande\Repository\CommandeRepositoryInterface;
 use App\Domain\Livraison\Livraison;
+use App\Domain\Livraison\Repository\LivraisonRepositoryInterface;
 
 it('retourne les détails de la livraison quand la commande existe', function () {
     // 1. ARRANGEMENT
@@ -56,6 +56,6 @@ it('lève une exception si la commande est introuvable', function () {
     // 2. ACT & ASSERT
     $useCase = new SuivreLivraisonUseCase($commandeRepositoryMock, $livraisonRepositoryMock);
 
-    expect(fn() => $useCase->execute($commandeId))
+    expect(fn () => $useCase->execute($commandeId))
         ->toThrow(\Exception::class, 'Commande introuvable.');
 });

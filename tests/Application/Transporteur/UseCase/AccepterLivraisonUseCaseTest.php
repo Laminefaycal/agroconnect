@@ -4,104 +4,110 @@ namespace Test\Application\Transporteur\UseCase;
 
 use App\Application\Transporteur\DTO\AccepterLivraisonDto;
 use App\Application\Transporteur\UseCase\AccepterLivraisonUseCase;
-use App\Domain\Transporteur\Repository\LivraisonRepositoryInterface;
-use App\Domain\Transporteur\Repository\TransporteurRepositoryInterface;
-use App\Domain\Transporteur\Service\ServiceLivraison;
-use Exception;
+use App\Domain\Livraison\Livraison;
+use App\Domain\Livraison\LivraisonRepositoryInterface;
+use App\Domain\Livraison\StatutLivraison;
+use App\Domain\Services\ServiceLivraison;
+use App\Domain\Transporteur\Transporteur;
+use App\Domain\Transporteur\TransporteurRepositoryInterface;
+use RuntimeException;
 
-beforeEach(function () {
-    // 1. Création des mocks pour les dépendances
-    $this->livraisonRepository = mock(LivraisonRepositoryInterface::class);
-    $this->transporteurRepository = mock(TransporteurRepositoryInterface::class);
-    $this->serviceLivraison = mock(ServiceLivraison::class); // Non utilisé directement dans execute(), mais requis par le constructeur
+it('throws an exception when livraison is not found', function () {
+    $livraisonRepo = mock(LivraisonRepositoryInterface::class);
+    $transporteurRepo = mock(TransporteurRepositoryInterface::class);
+    $serviceLivraison = mock(ServiceLivraison::class);
 
-    // 2. Instanciation du UseCase avec ses dépendances
-    $this->useCase = new AccepterLivraisonUseCase(
-        $this->livraisonRepository,
-        $this->transporteurRepository,
-        $this->serviceLivraison
-    );
+    $dto = new AccepterLivraisonDto('non-existing-livraison', 'transporteur-123');
 
-    // 3. Préparation d'un DTO de test
-    $this->dto = new AccepterLivraisonDto(
-        livraisonId: 42,
-        transporteurId: 7
-    );
-});
-
-### --- Scénarios de Succès ---
-
-it('doit assigner le transporteur et changer le statut de la livraison avec succès', function () {
-    // Mock de l'entité Transporteur
-    $transporteurMock = mock(stdClass::class); // Remplace stdClass par ta classe d'entité Transporteur réelle si nécessaire
-    $transporteurMock->shouldReceive('getId')->once()->andReturn(7);
-
-    // Mock de l'entité Livraison
-    $livraisonMock = mock(stdClass::class); // Remplace stdClass par ta classe d'entité Livraison réelle
-    $livraisonMock->shouldReceive('assignerTransporteur')->once()->with(7);
-    $livraisonMock->shouldReceive('changerStatut')->once()->with('accepte');
-
-    // Configuration des repositories pour retourner les entités
-    $this->livraisonRepository
-        ->shouldReceive('findById')
-        ->once()
-        ->with(42)
-        ->andReturn($livraisonMock);
-
-    $this->transporteurRepository
-        ->shouldReceive('findById')
-        ->once()
-        ->with(7)
-        ->andReturn($transporteurMock);
-
-    // On s'assure que la méthode save est bien appelée avec notre livraison modifiée
-    $this->livraisonRepository
-        ->shouldReceive('save')
-        ->once()
-        ->with($livraisonMock);
-
-    // Exécution du UseCase
-    $this->useCase->execute($this->dto);
-});
-
-### --- Scénarios d'Échec / Exceptions ---
-
-it('doit lever une exception si la livraison est introuvable', function () {
-    // Le repository retourne null pour la livraison
-    $this->livraisonRepository
-        ->shouldReceive('findById')
-        ->once()
-        ->with(42)
+    $livraisonRepo->shouldReceive('findById')
+        ->with('non-existing-livraison')
         ->andReturn(null);
 
-    // Le repository transporteur ne devrait jamais être appelé si la livraison n'est pas trouvée
-    $this->transporteurRepository->shouldNotReceive('findById');
+    $useCase = new AccepterLivraisonUseCase($livraisonRepo, $transporteurRepo, $serviceLivraison);
 
-    // On s'attend à ce qu'une Exception soit levée
-    expect(fn () => $this->useCase->execute($this->dto))
-        ->toThrow(Exception::class, 'Livraison introuvable.');
+    expect(fn () => $useCase->execute($dto))
+        ->toThrow(RuntimeException::class, "La livraison avec l'identifiant 'non-existing-livraison' n'existe pas.");
 });
 
-it('doit lever une exception si le transporteur est introuvable', function () {
-    // La livraison existe
-    $livraisonMock = mock(stdClass::class);
-    $this->livraisonRepository
-        ->shouldReceive('findById')
-        ->once()
-        ->with(42)
-        ->andReturn($livraisonMock);
+it('throws an exception when transporteur is not found', function () {
+    $livraisonRepo = mock(LivraisonRepositoryInterface::class);
+    $transporteurRepo = mock(TransporteurRepositoryInterface::class);
+    $serviceLivraison = mock(ServiceLivraison::class);
 
-    // Mais le transporteur est introuvable
-    $this->transporteurRepository
-        ->shouldReceive('findById')
-        ->once()
-        ->with(7)
+    $livraison = mock(Livraison::class);
+    $dto = new AccepterLivraisonDto('livraison-123', 'non-existing-transporteur');
+
+    $livraisonRepo->shouldReceive('findById')
+        ->with('livraison-123')
+        ->andReturn($livraison);
+
+    $transporteurRepo->shouldReceive('findById')
+        ->with('non-existing-transporteur')
         ->andReturn(null);
 
-    // Le save ne doit jamais être appelé
-    $this->livraisonRepository->shouldNotReceive('save');
+    $useCase = new AccepterLivraisonUseCase($livraisonRepo, $transporteurRepo, $serviceLivraison);
 
-    // On s'attend à ce qu'une Exception soit levée
-    expect(fn () => $this->useCase->execute($this->dto))
-        ->toThrow(Exception::class, 'Transporteur introuvable.');
+    expect(fn () => $useCase->execute($dto))
+        ->toThrow(RuntimeException::class, "Le transporteur avec l'identifiant 'non-existing-transporteur' n'existe pas.");
+});
+
+it('throws an exception when livraison is not in PROPOSEE status', function () {
+    $livraisonRepo = mock(LivraisonRepositoryInterface::class);
+    $transporteurRepo = mock(TransporteurRepositoryInterface::class);
+    $serviceLivraison = mock(ServiceLivraison::class);
+
+    $livraison = mock(Livraison::class);
+    $livraison->shouldReceive('getStatut')
+        ->andReturn(StatutLivraison::ASSIGNEE);
+
+    $transporteur = mock(Transporteur::class);
+    $dto = new AccepterLivraisonDto('livraison-123', 'transporteur-456');
+
+    $livraisonRepo->shouldReceive('findById')
+        ->with('livraison-123')
+        ->andReturn($livraison);
+
+    $transporteurRepo->shouldReceive('findById')
+        ->with('transporteur-456')
+        ->andReturn($transporteur);
+
+    $useCase = new AccepterLivraisonUseCase($livraisonRepo, $transporteurRepo, $serviceLivraison);
+
+    expect(fn () => $useCase->execute($dto))
+        ->toThrow(
+            RuntimeException::class,
+            "La livraison n'est pas proposée aux transporteurs (statut actuel : ASSIGNEE)."
+        );
+});
+
+it('successfully accepts a livraison when all conditions are met', function () {
+    $livraisonRepo = mock(LivraisonRepositoryInterface::class);
+    $transporteurRepo = mock(TransporteurRepositoryInterface::class);
+    $serviceLivraison = mock(ServiceLivraison::class);
+
+    $livraison = mock(Livraison::class);
+    $livraison->shouldReceive('getStatut')
+        ->andReturn(StatutLivraison::PROPOSEE);
+
+    $transporteur = mock(Transporteur::class);
+    $dto = new AccepterLivraisonDto('livraison-123', 'transporteur-456');
+
+    $livraisonRepo->shouldReceive('findById')
+        ->with('livraison-123')
+        ->andReturn($livraison);
+
+    $transporteurRepo->shouldReceive('findById')
+        ->with('transporteur-456')
+        ->andReturn($transporteur);
+
+    $serviceLivraison->shouldReceive('affecterTransporteur')
+        ->once()
+        ->with($livraison, $transporteur);
+
+    $useCase = new AccepterLivraisonUseCase($livraisonRepo, $transporteurRepo, $serviceLivraison);
+
+    $useCase->execute($dto);
+
+    // Le test passe si aucune exception n'est levée et que le mock a bien été appelé.
+    expect(true)->toBeTrue();
 });

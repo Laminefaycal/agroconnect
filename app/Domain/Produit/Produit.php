@@ -3,6 +3,7 @@
 namespace App\Domain\Produit;
 
 use App\Domain\Agriculteur\Agriculteur;
+
 /**
  * Class Produit
  *
@@ -13,6 +14,7 @@ use App\Domain\Agriculteur\Agriculteur;
 class Produit
 {
     private Agriculteur $agriculteur;
+
     /**
      * Constructeur de l'entité Produit avec promotion de propriétés.
      *
@@ -88,44 +90,51 @@ class Produit
     /**
      * assoccier l'agriculteur au produit
      */
-    public function setAgriculteur(Agriculteur $agriculteur){
+    public function setAgriculteur(Agriculteur $agriculteur)
+    {
         $this->agriculteur = $agriculteur;
     }
 
     /**
      * Recuperer l'agriculteur du produit
      */
-    public function getAgriculteur(){
+    public function getAgriculteur()
+    {
         return $this->agriculteur;
     }
 
     public function setNom(string $nom): self
     {
         $this->nom = $nom;
+
         return $this;
     }
 
     public function setDescription(string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
     public function setPrixUnitaire(float $prixUnitaire): self
     {
         $this->prixUnitaire = $prixUnitaire;
+
         return $this;
     }
 
     public function setStock(int $stock): self
     {
         $this->stock = $stock;
+
         return $this;
     }
 
     public function setUnite(string $unite): self
     {
         $this->unite = $unite;
+
         return $this;
     }
 }

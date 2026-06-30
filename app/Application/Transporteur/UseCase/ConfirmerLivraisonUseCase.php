@@ -2,39 +2,35 @@
 
 namespace App\Application\Transporteur\UseCase;
 
-use App\Domain\Transporteur\Repository\LivraisonRepositoryInterface;
-use Exception;
+use App\Application\Transporteur\DTO\ConfirmerLivraisonDto;
+use App\Domain\Livraison\LivraisonRepositoryInterface;
+use RuntimeException;
 
 /**
  * Class ConfirmerLivraisonUseCase
- * * Permet de clôturer et confirmer qu'une livraison a bien été remise à destination.
- * * @package App\Application\Transporteur\UseCase
+ *
+ * Permet de clôturer et confirmer qu'une livraison a bien été remise à destination.
  */
 class ConfirmerLivraisonUseCase
 {
-    /**
-     * @param LivraisonRepositoryInterface $livraisonRepository
-     */
     public function __construct(
         private LivraisonRepositoryInterface $livraisonRepository
     ) {}
 
     /**
-     * Exécute la confirmation finale de la livraison.
-     * * @param string $livraisonId
-     * @return void
-     * @throws Exception
+     * Exécute la confirmation de livraison.
+     *
+     * @throws RuntimeException Si la livraison n'existe pas.
      */
-    public function execute(string $livraisonId): void
+    public function execute(ConfirmerLivraisonDto $dto): void
     {
-        $livraison = $this->livraisonRepository->findById($livraisonId);
-
-        if (!$livraison) {
-            throw new Exception("Livraison introuvable.");
+        $livraison = $this->livraisonRepository->findById($dto->getLivraisonId());
+        if (! $livraison) {
+            throw new RuntimeException(
+                "La livraison avec l'identifiant '{$dto->getLivraisonId()}' n'existe pas."
+            );
         }
-
-        $livraison->changerStatut('livre');
-
+        $livraison->confirmerLivraison();
         $this->livraisonRepository->save($livraison);
     }
 }

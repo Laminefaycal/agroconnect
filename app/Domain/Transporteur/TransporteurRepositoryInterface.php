@@ -10,7 +10,7 @@ interface TransporteurRepositoryInterface
     /**
      * Récupère un transporteur par son identifiant.
      *
-     * @param string $id L'identifiant du transporteur.
+     * @param  string  $id  L'identifiant du transporteur.
      * @return Transporteur|null Le transporteur trouvé, ou null si inexistant.
      */
     public function findById(string $id): ?Transporteur;

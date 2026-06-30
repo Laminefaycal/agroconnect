@@ -2,12 +2,12 @@
 
 namespace Test\Application\Consommateur\UseCase;
 
-use App\Application\Consommateur\UseCase\ValiderReceptionUseCase;
 use App\Application\Consommateur\Dto\ValiderReceptionDto;
-use App\Domain\Commande\Repository\CommandeRepositoryInterface;
-use App\Domain\Livraison\Repository\LivraisonRepositoryInterface;
+use App\Application\Consommateur\UseCase\ValiderReceptionUseCase;
 use App\Domain\Commande\Commande;
+use App\Domain\Commande\Repository\CommandeRepositoryInterface;
 use App\Domain\Livraison\Livraison;
+use App\Domain\Livraison\Repository\LivraisonRepositoryInterface;
 
 it('valide la réception de la livraison avec succès', function () {
     // 1. ARRANGEMENT
@@ -64,7 +64,7 @@ it('lève une exception si la commande est introuvable', function () {
     // 2. ACT & ASSERT
     $useCase = new ValiderReceptionUseCase($commandeRepositoryMock, $livraisonRepositoryMock);
 
-    expect(fn() => $useCase->execute($dtoMock))
+    expect(fn () => $useCase->execute($dtoMock))
         ->toThrow(\Exception::class, 'Commande introuvable.');
 });
 
@@ -94,6 +94,6 @@ it('lève une exception si la livraison associée à la commande est introuvable
     // 2. ACT & ASSERT
     $useCase = new ValiderReceptionUseCase($commandeRepositoryMock, $livraisonRepositoryMock);
 
-    expect(fn() => $useCase->execute($dtoMock))
+    expect(fn () => $useCase->execute($dtoMock))
         ->toThrow(\Exception::class, 'Livraison introuvable.');
 });

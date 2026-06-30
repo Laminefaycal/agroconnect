@@ -1,28 +1,53 @@
 <?php
 
-namespace  Test\Application\Transporteur\UseCase;
+namespace Test\Application\Transporteur\UseCase;
 
-use App\Application\Transporteur\UseCase\MettreAJourStatutLivraisonUseCase;
 use App\Application\Transporteur\DTO\MiseAJourStatutDto;
-use App\Domain\Transporteur\Repository\LivraisonRepositoryInterface;
-use App\Domain\Transporteur\Entity\Livraison;
+use App\Application\Transporteur\UseCase\MettreAJourStatutLivraisonUseCase;
+use App\Domain\Livraison\Livraison;
+use App\Domain\Livraison\StatutLivraison;
+use App\Domain\Transporteur\Repository\LivraisonRepositoryInterface; // ← bon namespace
 
-it('met a jour le statut d une livraison avec succes', function () {
-    // Arrange
-    $dto = new MiseAJourStatutDto('LIV-001', 'en_cours');
+test('mise à jour du statut avec succès', function () {
+    $livraisonId = 'liv-001';
+    $statutValue = StatutLivraison::PRISE_EN_CHARGE->value;
 
-    $livraisonMock = mock(Livraison::class);
-    $livraisonMock->shouldReceive('changerStatut')->with('en_cours')->once();
+    $dto = new MiseAJourStatutDto($livraisonId, $statutValue);
 
-    $repositoryMock = mock(LivraisonRepositoryInterface::class);
-    $repositoryMock->shouldReceive('findById')->with('LIV-001')->andReturn($livraisonMock);
-    $repositoryMock->shouldReceive('save')->with($livraisonMock)->once();
+    $livraison = mock(Livraison::class);
+    $livraison->shouldReceive('mettreAJourStatut')
+        ->once()
+        ->with(StatutLivraison::PRISE_EN_CHARGE);
 
-    $useCase = new MettreAJourStatutLivraisonUseCase($repositoryMock);
+    $repository = mock(LivraisonRepositoryInterface::class); // ← interface correcte
+    $repository->shouldReceive('findById')
+        ->once()
+        ->with($livraisonId)
+        ->andReturn($livraison);
+    $repository->shouldReceive('save')
+        ->once()
+        ->with($livraison)
+        ->andReturn($livraison);
 
-    // Act
+    $useCase = new MettreAJourStatutLivraisonUseCase($repository);
     $useCase->execute($dto);
+});
 
-    // Assert
-    expect(true)->toBeTrue();
+test('exception si livraison introuvable', function () {
+    $livraisonId = 'liv-999';
+    $statutValue = StatutLivraison::LIVREE->value;
+
+    $dto = new MiseAJourStatutDto($livraisonId, $statutValue);
+
+    $repository = mock(LivraisonRepositoryInterface::class);
+    $repository->shouldReceive('findById')
+        ->once()
+        ->with($livraisonId)
+        ->andReturn(null);
+    $repository->shouldNotReceive('save');
+
+    $useCase = new MettreAJourStatutLivraisonUseCase($repository);
+
+    expect(fn () => $useCase->execute($dto))
+        ->toThrow(\Exception::class, 'Livraison introuvable.');
 });

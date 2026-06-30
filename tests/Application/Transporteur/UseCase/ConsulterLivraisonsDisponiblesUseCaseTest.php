@@ -1,6 +1,6 @@
 <?php
 
-namespace  Test\Application\Transporteur\UseCase;
+namespace Test\Application\Transporteur\UseCase;
 
 use App\Application\Transporteur\UseCase\ConsulterLivraisonsDisponiblesUseCase;
 use App\Domain\Transporteur\Repository\LivraisonRepositoryInterface;

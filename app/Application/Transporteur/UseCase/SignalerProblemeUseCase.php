@@ -2,42 +2,41 @@
 
 namespace App\Application\Transporteur\UseCase;
 
-use App\Domain\Transporteur\Repository\LivraisonRepositoryInterface;
-use Exception;
+use App\Application\Transporteur\DTO\SignalerProblemeDto;
+use App\Domain\Livraison\LivraisonRepositoryInterface;
+use App\Domain\Livraison\StatutLivraison;
+use RuntimeException;
 
 /**
  * Class SignalerProblemeUseCase
- * * Permet à un transporteur de notifier un problème ou un incident survenu lors d'une livraison.
- * * @package App\Application\Transporteur\UseCase
+ *
+ * Permet à un transporteur de notifier un problème ou un incident survenu lors d'une livraison.
  */
 class SignalerProblemeUseCase
 {
-    /**
-     * @param LivraisonRepositoryInterface $livraisonRepository
-     */
     public function __construct(
         private LivraisonRepositoryInterface $livraisonRepository
     ) {}
 
     /**
      * Exécute le signalement d'un incident sur une livraison.
-     * * @param string $livraisonId Identifiant de la livraison concernée.
-     * @param string $description Description détaillée du problème.
-     * @return void
-     * @throws Exception
+     *
+     * @throws RuntimeException Si la livraison n'existe pas ou si elle est déjà livrée.
      */
-    public function execute(string $livraisonId, string $description): void
+    public function execute(SignalerProblemeDto $dto): void
     {
-        $livraison = $this->livraisonRepository->findById($livraisonId);
-
-        if (!$livraison) {
-            throw new Exception("Livraison introuvable.");
+        $livraison = $this->livraisonRepository->findById($dto->getLivraisonId());
+        if (! $livraison) {
+            throw new RuntimeException(
+                "La livraison avec l'identifiant '{$dto->getLivraisonId()}' n'existe pas."
+            );
         }
-
-        // Appliquer la logique métier de signalement d'incident
-        $livraison->notifierIncident($description);
-        $livraison->changerStatut('incident_signale');
-
+        if ($livraison->getStatut() === StatutLivraison::LIVREE) {
+            throw new RuntimeException(
+                'Impossible de signaler un problème : la livraison est déjà marquée comme livrée.'
+            );
+        }
+        $livraison->mettreAJourStatut(StatutLivraison::PROBLEME);
         $this->livraisonRepository->save($livraison);
     }
 }

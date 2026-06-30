@@ -18,7 +18,7 @@ class ModifierProduitUseCase
     {
         $produit = $this->produitRepository->findById($produitId);
 
-        if (!$produit) {
+        if (! $produit) {
             throw new InvalidArgumentException('Produit non trouvé.');
         }
 
