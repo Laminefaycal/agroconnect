@@ -7,84 +7,132 @@ use App\Domain\Commande\LigneCommande;
 use App\Domain\Commande\ModeLivraison;
 use App\Domain\Commande\StatutCommande;
 use App\Domain\Livraison\Livraison;
+use App\Domain\Livraison\StatutLivraison;
 use App\Domain\Transporteur\Transporteur;
 use DateTime;
 use InvalidArgumentException;
 use Mockery;
+use PHPUnit\Framework\TestCase;
 
-it('peut être instanciée correctement avec ses valeurs initiales', function () {
-    $date = new DateTime;
-    $commande = new Commande('CMD-123', $date, StatutCommande::EN_ATTENTE_VALIDATION, ModeLivraison::TRANSPORTEUR);
+uses(TestCase::class);
 
-    expect($commande->getId())->toBe('CMD-123')
-        ->and($commande->getDateCommande())->toBe($date)
-        ->and($commande->getStatut())->toBe(StatutCommande::EN_ATTENTE_VALIDATION)
-        ->and($commande->getModeLivraison())->toBe(ModeLivraison::TRANSPORTEUR)
-        ->and($commande->getLignes())->toBeEmpty()
-        ->and($commande->getLivraison())->toBeNull();
-});
+describe('Commande', function () {
 
-it('peut être validée avec succès si elle est en attente de validation', function () {
-    $commande = new Commande('CMD-123', new DateTime, StatutCommande::EN_ATTENTE_VALIDATION, ModeLivraison::TRANSPORTEUR);
+    it('peut être créée avec les bons attributs', function () {
+        $date = new DateTime('2026-01-01');
+        $commande = new Commande(
+            dateCommande: $date,
+            statut: StatutCommande::EN_ATTENTE_VALIDATION,
+            modeLivraison: ModeLivraison::TRANSPORTEUR,
+            id: 'cmd-123'
+        );
 
-    $commande->valider();
+        expect($commande->getId())->toBe('cmd-123')
+            ->and($commande->getDateCommande())->toEqual($date)
+            ->and($commande->getStatut())->toBe(StatutCommande::EN_ATTENTE_VALIDATION)
+            ->and($commande->getModeLivraison())->toBe(ModeLivraison::TRANSPORTEUR)
+            ->and($commande->getLignes())->toBeEmpty()
+            ->and($commande->getLivraison())->toBeNull();
+    });
 
-    expect($commande->getStatut())->toBe(StatutCommande::VALIDEE);
-});
+    it('valide une commande en attente', function () {
+        $commande = new Commande(
+            dateCommande: new DateTime,
+            statut: StatutCommande::EN_ATTENTE_VALIDATION,
+            modeLivraison: ModeLivraison::TRANSPORTEUR,
+            id: null
+        );
 
-it('lève une exception si on valide une commande qui n\'est pas en attente de validation', function () {
-    $commande = new Commande('CMD-123', new DateTime, StatutCommande::VALIDEE, ModeLivraison::TRANSPORTEUR);
+        $commande->valider();
 
-    expect(fn () => $commande->valider())
-        ->toThrow(InvalidArgumentException::class, 'Seule une commande en attente peut être validée.');
-});
+        expect($commande->getStatut())->toBe(StatutCommande::VALIDEE);
+    });
 
-it('peut changer son mode de livraison', function () {
-    $commande = new Commande('CMD-123', new DateTime, StatutCommande::EN_ATTENTE_VALIDATION, ModeLivraison::TRANSPORTEUR);
+    it('lève une exception si on valide une commande qui n\'est pas en attente', function () {
+        $commande = new Commande(
+            dateCommande: new DateTime,
+            statut: StatutCommande::VALIDEE,
+            modeLivraison: ModeLivraison::TRANSPORTEUR,
+            id: null
+        );
 
-    $commande->choisirModeLivraison(ModeLivraison::AGRICULTEUR);
+        expect(fn () => $commande->valider())->toThrow(InvalidArgumentException::class, 'Seule une commande en attente peut être validée.');
+    });
 
-    expect($commande->getModeLivraison())->toBe(ModeLivraison::AGRICULTEUR);
-});
+    it('change le mode de livraison', function () {
+        $commande = new Commande(
+            dateCommande: new DateTime,
+            statut: StatutCommande::EN_ATTENTE_VALIDATION,
+            modeLivraison: ModeLivraison::TRANSPORTEUR,
+            id: null
+        );
 
-it('peut ajouter des lignes de commande', function () {
-    $commande = new Commande('CMD-123', new DateTime, StatutCommande::EN_ATTENTE_VALIDATION, ModeLivraison::TRANSPORTEUR);
-    $ligneMock = mock(LigneCommande::class);
+        $commande->choisirModeLivraison(ModeLivraison::AGRICULTEUR);
 
-    $commande->ajouterLigne($ligneMock);
+        expect($commande->getModeLivraison())->toBe(ModeLivraison::AGRICULTEUR);
+    });
 
-    expect($commande->getLignes())->toHaveCount(1)
-        ->and($commande->getLignes()[0])->toBe($ligneMock);
+    it('assigne un transporteur et passe en livraison si le mode est TRANSPORTEUR', function () {
+        $transporteur = Mockery::mock(Transporteur::class);
 
-});
-it('utilise la livraison existante pour y assigner le transporteur', function () {
-    // 1. Arrange
-    $commande = Mockery::mock(Commande::class)->makePartial();
-    $commande->shouldReceive('getModeLivraison')->andReturn(ModeLivraison::TRANSPORTEUR);
+        $commande = new Commande(
+            dateCommande: new DateTime,
+            statut: StatutCommande::VALIDEE,
+            modeLivraison: ModeLivraison::TRANSPORTEUR,
+            id: null
+        );
 
-    // 💡 LA CORRECTION : On redonne la vraie classe, Mockery va générer le bon type
-    $livraisonMock = Mockery::mock(Livraison::class);
-    $transporteurMock = Mockery::mock(Transporteur::class);
+        $commande->assignerTransporteur($transporteur);
 
-    // Configuration des comportements
-    $commande->shouldReceive('setLivraison')->with($livraisonMock)->andReturnSelf();
-    $commande->shouldReceive('getLivraison')->andReturn($livraisonMock);
-    $commande->shouldReceive('getStatut')->andReturn(StatutCommande::EN_LIVRAISON);
-    $commande->shouldReceive('assignerTransporteur')->with($transporteurMock)->once();
+        expect($commande->getStatut())->toBe(StatutCommande::EN_LIVRAISON)
+            ->and($commande->getLivraison())->not->toBeNull()
+            ->and($commande->getLivraison()->getStatut())->toBe(StatutLivraison::ASSIGNEE);
+    });
 
-    // 2. Act
-    // On appelle la méthode via le mock partiel
-    $commande->setLivraison($livraisonMock);
-    $commande->assignerTransporteur($transporteurMock);
+    it('lève une exception si on tente d\'assigner un transporteur en mode AGRICULTEUR', function () {
+        $transporteur = Mockery::mock(Transporteur::class);
 
-    // 3. Assert
-    expect($commande->getLivraison())->toBe($livraisonMock)
-        ->and($commande->getStatut())->toBe(StatutCommande::EN_LIVRAISON);
-});
-it('lève une exception si on assigne un transporteur alors que le mode est AGRICULTEUR', function () {
-    $commande = new Commande('CMD-123', new DateTime, StatutCommande::VALIDEE, ModeLivraison::AGRICULTEUR);
-    $transporteurMock = mock(Transporteur::class);
+        $commande = new Commande(
+            dateCommande: new DateTime,
+            statut: StatutCommande::VALIDEE,
+            modeLivraison: ModeLivraison::AGRICULTEUR,
+            id: null
+        );
 
-    expect(fn () => $commande->assignerTransporteur($transporteurMock))
-        ->toThrow(InvalidArgumentException::class, 'Impossible d’assigner un transporteur en mode livraison par agriculteur.');
+        expect(fn () => $commande->assignerTransporteur($transporteur))
+            ->toThrow(InvalidArgumentException::class, 'Impossible d’assigner un transporteur en mode livraison par agriculteur.');
+    });
+
+    it('peut ajouter des lignes de commande', function () {
+        $commande = new Commande(
+            dateCommande: new DateTime,
+            statut: StatutCommande::EN_ATTENTE_VALIDATION,
+            modeLivraison: ModeLivraison::TRANSPORTEUR,
+            id: null
+        );
+
+        $ligne1 = Mockery::mock(LigneCommande::class);
+        $ligne2 = Mockery::mock(LigneCommande::class);
+
+        $commande->ajouterLigne($ligne1);
+        $commande->ajouterLigne($ligne2);
+
+        expect($commande->getLignes())->toHaveCount(2)
+            ->and($commande->getLignes()[0])->toBe($ligne1)
+            ->and($commande->getLignes()[1])->toBe($ligne2);
+    });
+
+    it('permet de définir une livraison existante', function () {
+        $commande = new Commande(
+            dateCommande: new DateTime,
+            statut: StatutCommande::EN_ATTENTE_VALIDATION,
+            modeLivraison: ModeLivraison::TRANSPORTEUR,
+            id: null
+        );
+
+        $livraison = Mockery::mock(Livraison::class);
+        $commande->setLivraison($livraison);
+
+        expect($commande->getLivraison())->toBe($livraison);
+    });
 });

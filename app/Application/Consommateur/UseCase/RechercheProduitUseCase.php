@@ -32,6 +32,6 @@ class RechercheProduitUseCase
             throw new \InvalidArgumentException('Le mot-clé de recherche ne peut pas être vide.');
         }
 
-        return $this->produitRepository->searchByKeyword($nettoye);
+        return $this->produitRepository->search($nettoye);
     }
 }

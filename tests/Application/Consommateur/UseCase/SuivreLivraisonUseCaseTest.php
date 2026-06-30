@@ -1,61 +1,70 @@
 <?php
 
-namespace Test\Application\Consommateur\UseCase;
+namespace Tests\Application\Consommateur\UseCase;
 
 use App\Application\Consommateur\UseCase\SuivreLivraisonUseCase;
 use App\Domain\Commande\Commande;
 use App\Domain\Commande\Repository\CommandeRepositoryInterface;
 use App\Domain\Livraison\Livraison;
 use App\Domain\Livraison\Repository\LivraisonRepositoryInterface;
+use InvalidArgumentException;
+use Mockery;
+use PHPUnit\Framework\TestCase;
 
-it('retourne les détails de la livraison quand la commande existe', function () {
-    // 1. ARRANGEMENT
-    $commandeId = 'cmd-xyz-789';
+uses(TestCase::class);
 
-    // Création des doubles (Mocks) pour l'entité et la livraison
-    $commandeMock = mock(Commande::class);
-    $livraisonMock = mock(Livraison::class);
+describe('SuivreLivraisonUseCase', function () {
 
-    // Mock du CommandeRepository
-    $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
-    $commandeRepositoryMock->shouldReceive('findById')
-        ->once()
-        ->with($commandeId)
-        ->andReturn($commandeMock);
+    it('retourne la livraison associée à la commande si elle existe', function () {
+        // Préparer les mocks
+        $commandeId = 'cmd-123';
+        $livraison = Mockery::mock(Livraison::class);
 
-    // Mock du LivraisonRepository
-    $livraisonRepositoryMock = mock(LivraisonRepositoryInterface::class);
-    $livraisonRepositoryMock->shouldReceive('findByCommandeId')
-        ->once()
-        ->with($commandeId)
-        ->andReturn($livraisonMock);
+        $commande = Mockery::mock(Commande::class);
+        $commande->shouldReceive('getLivraison')->once()->andReturn($livraison);
 
-    // 2. ACT
-    $useCase = new SuivreLivraisonUseCase($commandeRepositoryMock, $livraisonRepositoryMock);
-    $resultat = $useCase->execute($commandeId);
+        $commandeRepo = Mockery::mock(CommandeRepositoryInterface::class);
+        $commandeRepo->shouldReceive('findById')->with($commandeId)->once()->andReturn($commande);
 
-    // 3. ASSERT
-    expect($resultat)->toBe($livraisonMock);
-});
+        $livraisonRepo = Mockery::mock(LivraisonRepositoryInterface::class);
 
-it('lève une exception si la commande est introuvable', function () {
-    // 1. ARRANGEMENT
-    $commandeId = 'cmd-inexistante';
+        $useCase = new SuivreLivraisonUseCase($commandeRepo, $livraisonRepo);
 
-    $commandeRepositoryMock = mock(CommandeRepositoryInterface::class);
-    // On simule qu'aucune commande n'est trouvée (renvoie null)
-    $commandeRepositoryMock->shouldReceive('findById')
-        ->once()
-        ->with($commandeId)
-        ->andReturn(null);
+        // Exécution
+        $result = $useCase->execute($commandeId);
 
-    // RÈGLE DE SÉCURITÉ : Le dépôt de livraison ne doit jamais être interrogé
-    $livraisonRepositoryMock = mock(LivraisonRepositoryInterface::class);
-    $livraisonRepositoryMock->shouldNotReceive('findByCommandeId');
+        // Vérification
+        expect($result)->toBe($livraison);
+    });
 
-    // 2. ACT & ASSERT
-    $useCase = new SuivreLivraisonUseCase($commandeRepositoryMock, $livraisonRepositoryMock);
+    it('lève une exception si la commande est introuvable', function () {
+        $commandeId = 'cmd-123';
 
-    expect(fn () => $useCase->execute($commandeId))
-        ->toThrow(\Exception::class, 'Commande introuvable.');
+        $commandeRepo = Mockery::mock(CommandeRepositoryInterface::class);
+        $commandeRepo->shouldReceive('findById')->with($commandeId)->once()->andReturn(null);
+
+        $livraisonRepo = Mockery::mock(LivraisonRepositoryInterface::class);
+
+        $useCase = new SuivreLivraisonUseCase($commandeRepo, $livraisonRepo);
+
+        expect(fn () => $useCase->execute($commandeId))
+            ->toThrow(InvalidArgumentException::class, "Commande introuvable avec l'ID : cmd-123");
+    });
+
+    it('lève une exception si la commande n\'a pas de livraison associée', function () {
+        $commandeId = 'cmd-123';
+
+        $commande = Mockery::mock(Commande::class);
+        $commande->shouldReceive('getLivraison')->once()->andReturn(null);
+
+        $commandeRepo = Mockery::mock(CommandeRepositoryInterface::class);
+        $commandeRepo->shouldReceive('findById')->with($commandeId)->once()->andReturn($commande);
+
+        $livraisonRepo = Mockery::mock(LivraisonRepositoryInterface::class);
+
+        $useCase = new SuivreLivraisonUseCase($commandeRepo, $livraisonRepo);
+
+        expect(fn () => $useCase->execute($commandeId))
+            ->toThrow(InvalidArgumentException::class, 'Aucune livraison associée à cette commande.');
+    });
 });

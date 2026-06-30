@@ -16,7 +16,7 @@ it('retourne la liste des produits correspondants au mot-clé nettoyé', functio
     $resultatAttendu = [$produitMock1, $produitMock2];
 
     $produitRepositoryMock = mock(ProduitRepositoryInterface::class);
-    $produitRepositoryMock->shouldReceive('searchByKeyword')
+    $produitRepositoryMock->shouldReceive('search')
         ->once()
         ->with($keywordNettoye)
         ->andReturn($resultatAttendu);
@@ -34,7 +34,7 @@ it('retourne la liste des produits correspondants au mot-clé nettoyé', functio
 it('lève une exception de type InvalidArgumentException si le mot-clé est vide ou composé uniquement d’espaces', function (string $keywordInvalide) {
     // 1. ARRANGEMENT
     $produitRepositoryMock = mock(ProduitRepositoryInterface::class);
-    $produitRepositoryMock->shouldNotReceive('searchByKeyword');
+    $produitRepositoryMock->shouldNotReceive('search');
 
     $useCase = new RechercheProduitUseCase($produitRepositoryMock);
 

@@ -1,85 +1,199 @@
 <?php
 
-namespace Test\Application\Consommateur\UseCase;
+namespace Tests\Application\Consommateur\UseCase;
 
-use App\Application\Consommateur\Dto\PasserCommandeDto;
+use App\Application\Consommateur\DTO\LigneCommandeDto;
+use App\Application\Consommateur\DTO\PasserCommandeDto;
+use App\Application\Consommateur\UseCase\PasserCommandeUseCase;
 use App\Domain\Commande\Commande;
-use App\Domain\Commande\LigneCommande;
 use App\Domain\Commande\ModeLivraison;
 use App\Domain\Commande\StatutCommande;
+use App\Domain\Consommateur\Consommateur;
 use App\Domain\Interface\Repository\CommandeRepositoryInterface;
 use App\Domain\Interface\Repository\ConsommateurRepositoryInterface;
 use App\Domain\Interface\Repository\ProduitRepositoryInterface;
+use App\Domain\Produit\Produit;
 use App\Domain\Service\ServiceDisponibilite;
-use DateTime;
+use Exception;
+use Mockery;
+use PHPUnit\Framework\TestCase;
 
-/**
- * Cas d'utilisation gérant la création et le passage d'une commande par un consommateur.
- */
-class PasserCommandeUseCase
-{
-    public function __construct(
-        private CommandeRepositoryInterface $commandeRepository,
-        private ConsommateurRepositoryInterface $consommateurRepository,
-        private ProduitRepositoryInterface $produitRepository,
-        private ServiceDisponibilite $serviceDisponibilite
-    ) {}
+uses(TestCase::class);
 
-    /**
-     * Orchestre les vérifications métier et enregistre la nouvelle commande.
-     *
-     * @param  PasserCommandeDto  $dto  Les données de la commande.
-     * @return Commande L'entité de la commande créée.
-     *
-     * @throws \Exception Si le consommateur ou le produit n'existe pas, ou si le stock est insuffisant.
-     */
-    public function execute(PasserCommandeDto $dto): Commande
-    {
-        // 1. Validation de l'existence du consommateur
-        $consommateur = $this->consommateurRepository->findById($dto->getConsommateurId());
-        if (! $consommateur) {
-            throw new \Exception('Consommateur introuvable.');
-        }
+describe('PasserCommandeUseCase', function () {
 
-        // 2. Validation du produit et de sa disponibilité logistique
-        $produit = $this->produitRepository->findById($dto->getProduitId());
-        if (! $produit) {
-            throw new \Exception('Produit introuvable.');
-        }
+    it('crée une commande avec succès dans le cas nominal', function () {
+        $consommateurId = 'cons-123';
+        $produitId = 'prod-456';
+        $quantite = 5;
+        $prix = 10.5;
+        $mode = ModeLivraison::TRANSPORTEUR;
 
-        if (! $this->serviceDisponibilite->estDisponiblePourZone($produit, $dto->getAdresseLivraison())) {
-            throw new \DomainException('Ce produit ne peut pas être livré dans votre zone.');
-        }
+        // Mock du Consommateur
+        $consommateur = Mockery::mock(Consommateur::class);
+        $consommateur->shouldReceive('getId')->andReturn($consommateurId);
 
-        // 3. Règle métier : Vérification et déduction des stocks du producteur
-        if ($produit->getQuantite() < $dto->getQuantite()) {
-            throw new \DomainException('Stock insuffisant pour ce produit.');
-        }
+        // Mock du Produit
+        $produit = Mockery::mock(Produit::class);
+        $produit->shouldReceive('getId')->andReturn($produitId);
+        $produit->shouldReceive('getNom')->andReturn('Banane');
+        $produit->shouldReceive('getPrixUnitaire')->andReturn($prix);
+        $produit->shouldReceive('estDisponible')->with($quantite)->andReturn(true);
+        $produit->shouldReceive('decrementerStock')->with($quantite)->once();
 
-        // Mettre à jour le stock du produit au sein du domaine
-        $produit->retirerDuStock($dto->getQuantite());
-        $this->produitRepository->save($produit);
+        // Mock du LigneCommandeDto (pour éviter l'accès à une propriété privée)
+        $ligneDto = Mockery::mock(LigneCommandeDto::class);
+        $ligneDto->shouldReceive('getProduitId')->andReturn($produitId);
+        $ligneDto->shouldReceive('getQuantite')->andReturn($quantite);
 
-        $commande = new Commande(
-            id: uniqid('cmd_'),
-            dateCommande: new DateTime,
-            statut: StatutCommande::EN_ATTENTE_VALIDATION,
-            modeLivraison: ModeLivraison::TRANSPORTEUR
+        // Repositories
+        $consommateurRepo = Mockery::mock(ConsommateurRepositoryInterface::class);
+        $consommateurRepo->shouldReceive('findById')->with($consommateurId)->andReturn($consommateur);
+
+        $produitRepo = Mockery::mock(ProduitRepositoryInterface::class);
+        $produitRepo->shouldReceive('findById')->with($produitId)->andReturn($produit);
+        $produitRepo->shouldReceive('save')->with($produit)->once();
+
+        $commandeRepo = Mockery::mock(CommandeRepositoryInterface::class);
+        $commandeRepo->shouldReceive('save')->with(Mockery::type(Commande::class))->once()->andReturnUsing(function ($commande) {
+            // Simule l'assignation d'un ID par le repo
+            (fn () => $this->id = 'cmd-789')->call($commande);
+
+            return $commande;
+        });
+
+        $serviceDispo = Mockery::mock(ServiceDisponibilite::class);
+        $serviceDispo->shouldReceive('verifierStock')->with($produit, $quantite)->andReturn(true);
+
+        $useCase = new PasserCommandeUseCase(
+            $commandeRepo,
+            $consommateurRepo,
+            $produitRepo,
+            $serviceDispo
         );
 
-        $ligneCommande = new LigneCommande(
-            id: uniqid('ligne_'),
-            produitId: $dto->getProduitId(),
-            quantite: $dto->getQuantite()
+        $dto = new PasserCommandeDto(
+            consommateurId: $consommateurId,
+            panier: [$ligneDto],
+            adresseLivraison: 'Libreville, Gabon',
+            modeLivraison: $mode
         );
 
-        $commande->ajouterLigne($ligneCommande);
+        $commande = $useCase->execute($dto);
 
-        // Optionnel : si ton entité stocke l'adresse de livraison directement
-        if (method_exists($commande, 'setAdresseLivraison')) {
-            $commande->setAdresseLivraison($dto->getAdresseLivraison());
-        }
+        expect($commande)->toBeInstanceOf(Commande::class)
+            ->and($commande->getId())->toBe('cmd-789')
+            ->and($commande->getStatut())->toBe(StatutCommande::EN_ATTENTE_VALIDATION)
+            ->and($commande->getModeLivraison())->toBe($mode)
+            ->and($commande->getLignes())->toHaveCount(1);
+    });
 
-        return $this->commandeRepository->save($commande);
-    }
-}
+    it('lève une exception si le consommateur est introuvable', function () {
+        $consommateurId = 'cons-123';
+        $ligneDto = Mockery::mock(LigneCommandeDto::class);
+        $ligneDto->shouldReceive('getProduitId')->andReturn('prod-456');
+        $ligneDto->shouldReceive('getQuantite')->andReturn(1);
+
+        $consommateurRepo = Mockery::mock(ConsommateurRepositoryInterface::class);
+        $consommateurRepo->shouldReceive('findById')->with($consommateurId)->andReturn(null);
+
+        $produitRepo = Mockery::mock(ProduitRepositoryInterface::class);
+        $commandeRepo = Mockery::mock(CommandeRepositoryInterface::class);
+        $serviceDispo = Mockery::mock(ServiceDisponibilite::class);
+
+        $useCase = new PasserCommandeUseCase(
+            $commandeRepo,
+            $consommateurRepo,
+            $produitRepo,
+            $serviceDispo
+        );
+
+        $dto = new PasserCommandeDto(
+            consommateurId: $consommateurId,
+            panier: [$ligneDto],
+            adresseLivraison: 'Libreville'
+        );
+
+        expect(fn () => $useCase->execute($dto))
+            ->toThrow(Exception::class, 'Consommateur introuvable.');
+    });
+
+    it('lève une exception si un produit est introuvable', function () {
+        $consommateurId = 'cons-123';
+        $produitId = 'prod-456';
+        $ligneDto = Mockery::mock(LigneCommandeDto::class);
+        $ligneDto->shouldReceive('getProduitId')->andReturn($produitId);
+        $ligneDto->shouldReceive('getQuantite')->andReturn(1);
+
+        $consommateur = Mockery::mock(Consommateur::class);
+        $consommateur->shouldReceive('getId')->andReturn($consommateurId);
+
+        $consommateurRepo = Mockery::mock(ConsommateurRepositoryInterface::class);
+        $consommateurRepo->shouldReceive('findById')->with($consommateurId)->andReturn($consommateur);
+
+        $produitRepo = Mockery::mock(ProduitRepositoryInterface::class);
+        $produitRepo->shouldReceive('findById')->with($produitId)->andReturn(null);
+
+        $commandeRepo = Mockery::mock(CommandeRepositoryInterface::class);
+        $serviceDispo = Mockery::mock(ServiceDisponibilite::class);
+
+        $useCase = new PasserCommandeUseCase(
+            $commandeRepo,
+            $consommateurRepo,
+            $produitRepo,
+            $serviceDispo
+        );
+
+        $dto = new PasserCommandeDto(
+            consommateurId: $consommateurId,
+            panier: [$ligneDto],
+            adresseLivraison: 'Libreville'
+        );
+
+        expect(fn () => $useCase->execute($dto))
+            ->toThrow(Exception::class, 'Produit introuvable : '.$produitId);
+    });
+
+    it('lève une exception si le stock est insuffisant', function () {
+        $consommateurId = 'cons-123';
+        $produitId = 'prod-456';
+        $quantite = 10;
+
+        $ligneDto = Mockery::mock(LigneCommandeDto::class);
+        $ligneDto->shouldReceive('getProduitId')->andReturn($produitId);
+        $ligneDto->shouldReceive('getQuantite')->andReturn($quantite);
+
+        $consommateur = Mockery::mock(Consommateur::class);
+        $consommateur->shouldReceive('getId')->andReturn($consommateurId);
+
+        $produit = Mockery::mock(Produit::class);
+        $produit->shouldReceive('getNom')->andReturn('Manioc');
+
+        $consommateurRepo = Mockery::mock(ConsommateurRepositoryInterface::class);
+        $consommateurRepo->shouldReceive('findById')->with($consommateurId)->andReturn($consommateur);
+
+        $produitRepo = Mockery::mock(ProduitRepositoryInterface::class);
+        $produitRepo->shouldReceive('findById')->with($produitId)->andReturn($produit);
+
+        $serviceDispo = Mockery::mock(ServiceDisponibilite::class);
+        $serviceDispo->shouldReceive('verifierStock')->with($produit, $quantite)->andReturn(false);
+
+        $commandeRepo = Mockery::mock(CommandeRepositoryInterface::class);
+
+        $useCase = new PasserCommandeUseCase(
+            $commandeRepo,
+            $consommateurRepo,
+            $produitRepo,
+            $serviceDispo
+        );
+
+        $dto = new PasserCommandeDto(
+            consommateurId: $consommateurId,
+            panier: [$ligneDto],
+            adresseLivraison: 'Libreville'
+        );
+
+        expect(fn () => $useCase->execute($dto))
+            ->toThrow(Exception::class, 'Stock insuffisant pour le produit : Manioc');
+    });
+});
