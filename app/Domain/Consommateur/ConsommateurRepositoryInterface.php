@@ -24,5 +24,5 @@ interface ConsommateurRepositoryInterface
      *
      * @param  Consommateur  $consommateur  L'entité à sauvegarder dans le système.
      */
-    public function save(Consommateur $consommateur): void;
+    public function save(Consommateur $consommateur): ?Consommateur;
 }

@@ -1,10 +1,10 @@
 @startuml
-title "Couche Application - Plateforme Agricole (Use Cases & DTOs) - Refactoré UUID"
+title "Couche Application - Plateforme Agricole (DDD Laravel) - Refactorée"
 
-namespace App\Application\Consommateur\DTO {
+package "App\Application\Consommateur\DTO" {
   class PasserCommandeDto {
     + string $consommateurId
-    + array $panier  // LigneCommandeDto[]
+    + array $panier
     + string $adresseLivraison
   }
   class LigneCommandeDto {
@@ -17,25 +17,44 @@ namespace App\Application\Consommateur\DTO {
   }
 }
 
-namespace App\Application\Consommateur\UseCase {
+package "App\Application\Consommateur\UseCase" {
   class ConsulterCatalogueUseCase {
+    - ProduitRepositoryInterface $produitRepository
+    + __construct(ProduitRepositoryInterface $produitRepository)
     + execute(): array
   }
+
   class RechercherProduitUseCase {
+    - ProduitRepositoryInterface $produitRepository
+    + __construct(ProduitRepositoryInterface $produitRepository)
     + execute(string $keyword): array
   }
+
   class PasserCommandeUseCase {
+    - CommandeRepositoryInterface $commandeRepository
+    - ConsommateurRepositoryInterface $consommateurRepository
+    - ProduitRepositoryInterface $produitRepository
+    - ServiceDisponibilite $serviceDisponibilite
+    + __construct(CommandeRepositoryInterface $commandeRepository, ConsommateurRepositoryInterface $consommateurRepository, ProduitRepositoryInterface $produitRepository, ServiceDisponibilite $serviceDisponibilite)
     + execute(PasserCommandeDto $dto): Commande
   }
+
   class SuivreLivraisonUseCase {
+    - CommandeRepositoryInterface $commandeRepository
+    - LivraisonRepositoryInterface $livraisonRepository
+    + __construct(CommandeRepositoryInterface $commandeRepository, LivraisonRepositoryInterface $livraisonRepository)
     + execute(string $commandeId): Livraison
   }
+
   class ValiderReceptionUseCase {
+    - CommandeRepositoryInterface $commandeRepository
+    - LivraisonRepositoryInterface $livraisonRepository
+    + __construct(CommandeRepositoryInterface $commandeRepository, LivraisonRepositoryInterface $livraisonRepository)
     + execute(ValiderReceptionDto $dto): void
   }
 }
 
-namespace App\Application\Agriculteur\DTO {
+package "App\Application\Agriculteur\DTO" {
   class PublierProduitDto {
     + string $agriculteurId
     + string $nom
@@ -52,28 +71,49 @@ namespace App\Application\Agriculteur\DTO {
   }
 }
 
-namespace App\Application\Agriculteur\UseCase {
+package "App\Application\Agriculteur\UseCase" {
   class PublierProduitUseCase {
+    - ProduitRepositoryInterface $produitRepository
+    - AgriculteurRepositoryInterface $agriculteurRepository
+    + __construct(ProduitRepositoryInterface $produitRepository, AgriculteurRepositoryInterface $agriculteurRepository)
     + execute(PublierProduitDto $dto): Produit
   }
+
   class ModifierProduitUseCase {
+    - ProduitRepositoryInterface $produitRepository
+    + __construct(ProduitRepositoryInterface $produitRepository)
     + execute(string $produitId, array $data): void
   }
+
   class SupprimerProduitUseCase {
+    - ProduitRepositoryInterface $produitRepository
+    + __construct(ProduitRepositoryInterface $produitRepository)
     + execute(string $produitId): void
   }
+
   class MettreAJourStockUseCase {
+    - ProduitRepositoryInterface $produitRepository
+    + __construct(ProduitRepositoryInterface $produitRepository)
     + execute(string $produitId, int $quantite): void
   }
+
   class ConsulterCommandesRecuesUseCase {
+    - CommandeRepositoryInterface $commandeRepository
+    + __construct(CommandeRepositoryInterface $commandeRepository)
     + execute(string $agriculteurId): array
   }
+
   class ValiderCommandeUseCase {
+    - CommandeRepositoryInterface $commandeRepository
+    - TransporteurRepositoryInterface $transporteurRepository
+    - LivraisonRepositoryInterface $livraisonRepository
+    - ServiceLivraison $serviceLivraison
+    + __construct(CommandeRepositoryInterface $commandeRepository, TransporteurRepositoryInterface $transporteurRepository, LivraisonRepositoryInterface $livraisonRepository, ServiceLivraison $serviceLivraison)
     + execute(ValiderCommandeDto $dto): void
   }
 }
 
-namespace App\Application\Transporteur\DTO {
+package "App\Application\Transporteur\DTO" {
   class AccepterLivraisonDto {
     + string $livraisonId
     + string $transporteurId
@@ -84,24 +124,52 @@ namespace App\Application\Transporteur\DTO {
   }
 }
 
-namespace App\Application\Transporteur\UseCase {
+package "App\Application\Transporteur\UseCase" {
   class ConsulterLivraisonsDisponiblesUseCase {
+    - LivraisonRepositoryInterface $livraisonRepository
+    + __construct(LivraisonRepositoryInterface $livraisonRepository)
     + execute(): array
   }
+
   class GetLivraisonDetailsUseCase {
+    - LivraisonRepositoryInterface $livraisonRepository
+    + __construct(LivraisonRepositoryInterface $livraisonRepository)
     + execute(string $livraisonId): Livraison
   }
+
   class AccepterLivraisonUseCase {
+    - LivraisonRepositoryInterface $livraisonRepository
+    - TransporteurRepositoryInterface $transporteurRepository
+    - ServiceLivraison $serviceLivraison
+    + __construct(LivraisonRepositoryInterface $livraisonRepository, TransporteurRepositoryInterface $transporteurRepository, ServiceLivraison $serviceLivraison)
     + execute(AccepterLivraisonDto $dto): void
   }
+
   class MettreAJourStatutLivraisonUseCase {
+    - LivraisonRepositoryInterface $livraisonRepository
+    + __construct(LivraisonRepositoryInterface $livraisonRepository)
     + execute(MiseAJourStatutDto $dto): void
   }
+
   class ConfirmerLivraisonUseCase {
+    - LivraisonRepositoryInterface $livraisonRepository
+    + __construct(LivraisonRepositoryInterface $livraisonRepository)
     + execute(string $livraisonId): void
   }
+
   class SignalerProblemeUseCase {
+    - LivraisonRepositoryInterface $livraisonRepository
+    + __construct(LivraisonRepositoryInterface $livraisonRepository)
     + execute(string $livraisonId, string $description): void
   }
 }
+
+' ===== Dépendances DTO =====
+PasserCommandeUseCase ..> PasserCommandeDto
+ValiderReceptionUseCase ..> ValiderReceptionDto
+PublierProduitUseCase ..> PublierProduitDto
+ValiderCommandeUseCase ..> ValiderCommandeDto
+AccepterLivraisonUseCase ..> AccepterLivraisonDto
+MettreAJourStatutLivraisonUseCase ..> MiseAJourStatutDto
+
 @enduml

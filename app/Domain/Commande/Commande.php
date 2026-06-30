@@ -15,10 +15,10 @@ class Commande
     private ?Livraison $livraison = null;
 
     public function __construct(
-        private string $id,
         private DateTime $dateCommande,
         private StatutCommande $statut,
-        private ModeLivraison $modeLivraison,  // typage corrigé
+        private ModeLivraison $modeLivraison,
+        private ?string $id,
     ) {}
 
     public function valider(): void
@@ -56,7 +56,6 @@ class Commande
         $this->lignes[] = $ligne;
     }
 
-    // Getters
     public function getId(): string
     {
         return $this->id;

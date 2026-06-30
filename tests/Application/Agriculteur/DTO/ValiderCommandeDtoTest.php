@@ -2,23 +2,49 @@
 
 namespace Tests\Application\Agriculteur\DTO;
 
-use App\Application\Agriculteur\DTO\PublierProduitDto;
+use App\Application\Agriculteur\DTO\ValiderCommandeDto;
+use App\Domain\Commande\ModeLivraison;
 
-it('creates PublierProduitDto with correct values', function () {
-    $dto = new PublierProduitDto(
-        agriculteurId: 1,
-        nom: 'Tomates Bio',
-        description: 'Tomates fraîches cultivées sans pesticides',
-        prix: 2.5, 
-        stock: 100,
-        unite: 'kg'
+test('il peut être instancié avec tous les paramètres', function () {
+    $dto = new ValiderCommandeDto(
+        commandeId: 'cmd-123',
+        estDisponible: true,
+        modeLivraison: ModeLivraison::TRANSPORTEUR,
+        transporteurId: 'tr-456'
     );
 
-    expect($dto)
-        ->agriculteurId->toBe(1)
-        ->nom->toBe('Tomates Bio')
-        ->description->toBe('Tomates fraîches cultivées sans pesticides')
-        ->prix->toBe(2.5)
-        ->stock->toBe(100)
-        ->unite->toBe('kg');
+    expect($dto->commandeId)->toBe('cmd-123');
+    expect($dto->estDisponible)->toBeTrue();
+    expect($dto->modeLivraison)->toBe(ModeLivraison::TRANSPORTEUR);
+    expect($dto->transporteurId)->toBe('tr-456');
+});
+
+test('il peut être instancié sans identifiant de transporteur', function () {
+    $dto = new ValiderCommandeDto(
+        commandeId: 'cmd-789',
+        estDisponible: false,
+        modeLivraison: ModeLivraison::AGRICULTEUR
+    );
+
+    expect($dto->commandeId)->toBe('cmd-789');
+    expect($dto->estDisponible)->toBeFalse();
+    expect($dto->modeLivraison)->toBe(ModeLivraison::AGRICULTEUR);
+    expect($dto->transporteurId)->toBeNull();
+});
+
+test('il accepte les différentes valeurs de l\'enum ModeLivraison', function () {
+    $dto1 = new ValiderCommandeDto('1', true, ModeLivraison::TRANSPORTEUR);
+    expect($dto1->modeLivraison)->toBe(ModeLivraison::TRANSPORTEUR);
+
+    $dto2 = new ValiderCommandeDto('2', false, ModeLivraison::AGRICULTEUR);
+    expect($dto2->modeLivraison)->toBe(ModeLivraison::AGRICULTEUR);
+});
+
+test('les propriétés sont correctement typées', function () {
+    $dto = new ValiderCommandeDto('cmd-abc', true, ModeLivraison::TRANSPORTEUR, 'tr-xyz');
+
+    expect($dto->commandeId)->toBeString();
+    expect($dto->estDisponible)->toBeBool();
+    expect($dto->modeLivraison)->toBeInstanceOf(ModeLivraison::class);
+    expect($dto->transporteurId)->toBeString(); // ou null, mais ici on a passé une chaîne
 });
