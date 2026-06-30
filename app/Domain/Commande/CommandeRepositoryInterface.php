@@ -39,5 +39,5 @@ interface CommandeRepositoryInterface
      *
      * @param  Commande  $commande  L'entité Commande à persister.
      */
-    public function save(Commande $commande): void;
+    public function save(Commande $commande): ?Commande;
 }

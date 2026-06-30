@@ -3,30 +3,37 @@
 namespace App\Domain\Transporteur;
 
 /**
- * Class Transporteur
- *
- * Représente un prestataire logistique ou un chauffeur sur la plateforme AgroConnect.
- * Gère l'identité, les coordonnées et le type de moyen de locomotion utilisé
- * pour effectuer le transit des marchandises.
+ * Classe représentant un transporteur sur la plateforme AgroConnect.
  */
 class Transporteur
 {
+    private string $id;
+
+    private string $nom;
+
+    private string $email;
+
+    private string $telephone;
+
+    private string $vehicule;
+
     /**
-     * Constructeur de l'entité Transporteur avec promotion de propriétés.
+     * Constructeur.
      *
-     * @param  string  $id  L'identifiant unique du transporteur.
-     * @param  string  $nom  Le nom complet ou la raison sociale.
-     * @param  string  $email  L'adresse e-mail professionnelle.
-     * @param  string  $telephone  Le numéro de téléphone (ex: +241...).
-     * @param  string  $vehicule  Le type ou modèle de véhicule utilisé (ex: Camionnette, Moto, Pick-up).
+     * @param  string  $id  Identifiant unique du transporteur.
+     * @param  string  $nom  Nom du transporteur (personne ou société).
+     * @param  string  $email  Adresse email de contact.
+     * @param  string  $telephone  Numéro de téléphone.
+     * @param  string  $vehicule  Type ou immatriculation du véhicule.
      */
-    public function __construct(
-        private string $id,
-        private string $nom,
-        private string $email,
-        private string $telephone,
-        private string $vehicule,
-    ) {}
+    public function __construct(string $id, string $nom, string $email, string $telephone, string $vehicule)
+    {
+        $this->id = $id;
+        $this->nom = $nom;
+        $this->email = $email;
+        $this->telephone = $telephone;
+        $this->vehicule = $vehicule;
+    }
 
     public function getId(): string
     {
@@ -51,5 +58,33 @@ class Transporteur
     public function getVehicule(): string
     {
         return $this->vehicule;
+    }
+
+    public function setNom(string $nom): self
+    {
+        $this->nom = $nom;
+
+        return $this;
+    }
+
+    public function setEmail(string $email): self
+    {
+        $this->email = $email;
+
+        return $this;
+    }
+
+    public function setTelephone(string $telephone): self
+    {
+        $this->telephone = $telephone;
+
+        return $this;
+    }
+
+    public function setVehicule(string $vehicule): self
+    {
+        $this->vehicule = $vehicule;
+
+        return $this;
     }
 }

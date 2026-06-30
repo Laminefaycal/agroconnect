@@ -31,5 +31,5 @@ interface LivraisonRepositoryInterface
      *
      * @param  Livraison  $livraison  L'entité Livraison à persister.
      */
-    public function save(Livraison $livraison): void;
+    public function save(Livraison $livraison): ?Livraison;
 }

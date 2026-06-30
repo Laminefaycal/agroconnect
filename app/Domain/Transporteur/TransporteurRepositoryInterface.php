@@ -3,25 +3,22 @@
 namespace App\Domain\Transporteur;
 
 /**
- * Interface TransporteurRepositoryInterface
- *
- * Spécifie le contrat de persistance pour la gestion des transporteurs partenaires.
- * Assure l'isolation de la logique métier logistique face aux mécanismes de stockage.
+ * Interface pour le dépôt des transporteurs.
  */
 interface TransporteurRepositoryInterface
 {
     /**
-     * Recherche un transporteur par son identifiant unique.
+     * Récupère un transporteur par son identifiant.
      *
      * @param  string  $id  L'identifiant du transporteur.
-     * @return Transporteur|null L'entité Transporteur correspondante, ou null si elle n'existe pas.
+     * @return Transporteur|null Le transporteur trouvé, ou null si inexistant.
      */
     public function findById(string $id): ?Transporteur;
 
     /**
-     * Récupère la liste de tous les transporteurs actuellement actifs et disponibles au Gabon.
+     * Récupère tous les transporteurs disponibles (ex: ceux qui peuvent prendre une livraison).
      *
-     * @return array Liste des entités Transporteur disponibles.
+     * @return Transporteur[] Liste des transporteurs disponibles.
      */
     public function findAllDisponibles(): array;
 }
