@@ -2,6 +2,8 @@
 
 namespace App\Application\Agriculteur\DTO;
 
+use App\Domain\Commande\ModeLivraison;
+
 /**
  * Class ValiderCommandeDto
  * * Objet de transfert de données (DTO) pour la validation d'une commande par un agriculteur.
@@ -21,7 +23,7 @@ class ValiderCommandeDto
     /**
      * @var string Le mode de livraison choisi (ex: ModeLivraison de votre diagramme).
      */
-    public string $modeLivraison;
+    public ModeLivraison $modeLivraison;
 
     /**
      * @var string|null L'identifiant unique du transporteur assigné (optionnel).
@@ -34,7 +36,7 @@ class ValiderCommandeDto
     public function __construct(
         string $commandeId,
         bool $estDisponible,
-        string $modeLivraison,
+        ModeLivraison $modeLivraison,
         ?string $transporteurId = null
     ) {
         $this->commandeId = $commandeId;

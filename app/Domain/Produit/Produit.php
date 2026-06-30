@@ -2,6 +2,8 @@
 
 namespace App\Domain\Produit;
 
+use App\Domain\Agriculteur\Agriculteur;
+
 /**
  * Class Produit
  *
@@ -11,10 +13,12 @@ namespace App\Domain\Produit;
  */
 class Produit
 {
+    private Agriculteur $agriculteur;
+
     /**
      * Constructeur de l'entité Produit avec promotion de propriétés.
      *
-     * @param  string  $id  L'identifiant unique du produit.
+     * @param  string|null  $id  L'identifiant unique du produit.
      * @param  string  $nom  Le nom du produit (ex: Banane plantain, Manioc, etc.).
      * @param  string  $description  La description détaillée du produit.
      * @param  float  $prixUnitaire  Le prix d'une unité de produit (en FCFA).
@@ -22,12 +26,12 @@ class Produit
      * @param  string  $unite  L'unité de mesure du produit (ex: kg, régime, sac).
      */
     public function __construct(
-        private string $id,
         private string $nom,
         private string $description,
         private float $prixUnitaire,
         private int $stock,
         private string $unite,
+        private ?string $id = null
     ) {}
 
     /**
@@ -81,5 +85,56 @@ class Produit
     public function getUnite(): string
     {
         return $this->unite;
+    }
+
+    /**
+     * assoccier l'agriculteur au produit
+     */
+    public function setAgriculteur(Agriculteur $agriculteur)
+    {
+        $this->agriculteur = $agriculteur;
+    }
+
+    /**
+     * Recuperer l'agriculteur du produit
+     */
+    public function getAgriculteur()
+    {
+        return $this->agriculteur;
+    }
+
+    public function setNom(string $nom): self
+    {
+        $this->nom = $nom;
+
+        return $this;
+    }
+
+    public function setDescription(string $description): self
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    public function setPrixUnitaire(float $prixUnitaire): self
+    {
+        $this->prixUnitaire = $prixUnitaire;
+
+        return $this;
+    }
+
+    public function setStock(int $stock): self
+    {
+        $this->stock = $stock;
+
+        return $this;
+    }
+
+    public function setUnite(string $unite): self
+    {
+        $this->unite = $unite;
+
+        return $this;
     }
 }

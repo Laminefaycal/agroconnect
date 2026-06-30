@@ -5,42 +5,34 @@ namespace Tests\Application\Consommateur\DTO;
 use App\Application\Consommateur\DTO\LigneCommandeDto;
 use App\Application\Consommateur\DTO\PasserCommandeDto;
 
-it('initialise correctement une commande', function () {
-    $ligne1 = new LigneCommandeDto('PROD-001', 2);
-    $ligne2 = new LigneCommandeDto('PROD-002', 4);
+it('peut être instancié avec des arguments nommés et retourne les bonnes valeurs', function () {
+    // Arrange
+    $ligneMock = mock(LigneCommandeDto::class); // Crée un mock pour simuler LigneCommandeDto
+    $panier = [$ligneMock];
 
+    // Act
     $dto = new PasserCommandeDto(
         consommateurId: 'CONS-001',
-        panier: [$ligne1, $ligne2],
-        adresseLivraison: 'Libreville, Quartier Louis'
+        panier: $panier,
+        adresseLivraison: 'Quartier Nzeng-Ayong, Libreville'
     );
 
+    // Assert
     expect($dto->getConsommateurId())->toBe('CONS-001')
-        ->and($dto->getPanier())->toHaveCount(2)
-        ->and($dto->getAdresseLivraison())->toBe('Libreville, Quartier Louis');
+        ->and($dto->getPanier())->toBeArray()
+        ->and($dto->getPanier())->toHaveCount(1)
+        ->and($dto->getPanier()[0])->toBe($ligneMock)
+        ->and($dto->getAdresseLivraison())->toBe('Quartier Nzeng-Ayong, Libreville');
 });
 
-it('contient les lignes de commande attendues', function () {
-    $ligne = new LigneCommandeDto('PROD-001', 3);
+it('retourne les bons types de données', function () {
+    // Arrange
+    $panier = []; // Un panier vide pour tester la structure
 
-    $dto = new PasserCommandeDto(
-        'CONS-001',
-        [$ligne],
-        'Libreville'
-    );
+    // Act
+    $dto = new PasserCommandeDto('CONS-002', $panier, 'Quartier Alibandeng, Libreville');
 
-    expect($dto->getPanier()[0])->toBeInstanceOf(LigneCommandeDto::class)
-        ->and($dto->getPanier()[0]->getProduitId())->toBe('PROD-001')
-        ->and($dto->getPanier()[0]->getQuantite())->toBe(3);
-});
-
-it('retourne les types attendus', function () {
-    $dto = new PasserCommandeDto(
-        'CONS-001',
-        [],
-        'Libreville'
-    );
-
+    // Assert
     expect($dto->getConsommateurId())->toBeString()
         ->and($dto->getPanier())->toBeArray()
         ->and($dto->getAdresseLivraison())->toBeString();
