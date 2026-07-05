@@ -9,9 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('livraisons', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('commande_id')->unique()->index();
-            $table->string('transporteur_id')->nullable()->index();
+            $table->uuid('id')->primary();
+            $table->uuid('commande_id')->foreignUuid()->references('id')->on('commandes')->onDelete('cascade');
+            $table->uuid('transporteur_id')->foreignUuid()->references('id')->on('transporteurs')->onDelete('set nul');
             $table->dateTime('date_prise_en_charge')->nullable();
             $table->dateTime('date_livraison_effective')->nullable();
             $table->string('statut');

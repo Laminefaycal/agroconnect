@@ -32,17 +32,17 @@ class CommandeModel extends Model
 
     public function consommateur(): BelongsTo
     {
-        return $this->belongsTo(ConsommateurModel::class, 'consommateur_id', 'id');
+        return $this->belongsTo(ConsommateurModel::class);
     }
 
     public function lignes(): HasMany
     {
-        return $this->hasMany(LigneCommandeModel::class, 'commande_id', 'id');
+        return $this->hasMany(LigneCommandeModel::class);
     }
 
     public function livraison(): HasOne
     {
-        return $this->hasOne(LivraisonModel::class, 'commande_id', 'id');
+        return $this->hasOne(LivraisonModel::class);
     }
 
 

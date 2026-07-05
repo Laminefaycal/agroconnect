@@ -9,10 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('transporteurs', function (Blueprint $table) {
-            $table->string('id')->primary(); // Clé primaire string
+            $table->uuid('id')->primary();
+            $table->uuid('livraisons_id')->foreignUuid()->references('id')->on('livraisons')->onDelete('set null');
             $table->string('nom');
             $table->string('telephone')->nullable();
-            $table->string('type_vehicule')->nullable(); // ex: Camion, Moto, Pick-up
+            $table->string('type_vehicule')->nullable();
             $table->timestamps();
         });
     }

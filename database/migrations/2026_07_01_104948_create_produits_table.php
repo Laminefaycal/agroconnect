@@ -9,8 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('produits', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->string('agriculteur_id')->index();
+            $table->uuid('id')->primary();
+            $table->uuid('agriculteur_id')->foreignUuid()->references('id')->on('agriculteurs')->onDelete('cascade');
             $table->string('nom');
             $table->text('description')->nullable();
             $table->decimal('prix_unitaire', 10, 2);

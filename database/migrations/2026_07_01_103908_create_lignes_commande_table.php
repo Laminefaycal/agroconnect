@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('lignes_commande', function (Blueprint $table) {
             $table->id();
-            $table->string('commande_id')->index();
-            $table->string('produit_id')->index();
+            $table->string('commande_id')->foreignUuid()->references('id')->on('commandes')->onDelete('cascade');
+            $table->string('produit_id')->foreignUuid()->references('id')->on('produits')->onDelete('restrict');
             $table->integer('quantite');
             $table->decimal('prix_unitaire', 10, 2);
             $table->timestamps();

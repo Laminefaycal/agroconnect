@@ -28,6 +28,6 @@ class ConsommateurModel extends Model
      */
     public function commandes(): HasMany
     {
-        return $this->hasMany(CommandeModel::class, 'consommateur_id', 'id');
+        return $this->hasMany(CommandeModel::class);
     }
 }

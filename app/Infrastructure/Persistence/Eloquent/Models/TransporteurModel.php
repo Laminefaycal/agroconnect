@@ -28,6 +28,6 @@ class TransporteurModel extends Model
      */
     public function livraisons(): HasMany
     {
-        return $this->hasMany(LivraisonModel::class, 'transporteur_id', 'id');
+        return $this->hasMany(LivraisonModel::class);
     }
 }

@@ -28,11 +28,11 @@ class LigneCommandeModel extends Model
 
     public function commande(): BelongsTo
     {
-        return $this->belongsTo(CommandeModel::class, 'commande_id', 'id');
+        return $this->belongsTo(CommandeModel::class);
     }
 
     public function produit(): BelongsTo
     {
-        return $this->belongsTo(ProduitModel::class, 'produit_id', 'id');
+        return $this->belongsTo(ProduitModel::class);
     }
 }

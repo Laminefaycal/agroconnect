@@ -9,7 +9,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('consommateurs', function (Blueprint $table) {
-            $table->string('id')->primary();
+            $table->uuid('id')->primary();
+            $table->uuid('commande_id')->foreignUuid()->references('id')->on('commandes')->onDelete('cascade');
             $table->string('nom');
             $table->string('telephone')->nullable();
             $table->string('adresse')->nullable();

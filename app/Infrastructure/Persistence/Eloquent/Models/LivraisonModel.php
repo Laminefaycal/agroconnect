@@ -37,7 +37,7 @@ class LivraisonModel extends Model
      */
     public function commande(): BelongsTo
     {
-        return $this->belongsTo(CommandeModel::class, 'commande_id', 'id');
+        return $this->belongsTo(CommandeModel::class);
     }
 
     /**
@@ -45,7 +45,7 @@ class LivraisonModel extends Model
      */
     public function transporteur(): BelongsTo
     {
-        return $this->belongsTo(TransporteurModel::class, 'transporteur_id', 'id');
+        return $this->belongsTo(TransporteurModel::class);
     }
 
 

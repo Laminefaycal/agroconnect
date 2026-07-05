@@ -27,7 +27,7 @@ class ProduitModel extends Model
 
     public function agriculteur(): BelongsTo
     {
-        return $this->belongsTo(AgriculteurModel::class, 'agriculteur_id', 'id');
+        return $this->belongsTo(AgriculteurModel::class);
     }
 
 

@@ -29,6 +29,6 @@ class AgriculteurModel extends Model
      */
     public function produits(): HasMany
     {
-        return $this->hasMany(ProduitModel::class, 'agriculteur_id', 'id');
+        return $this->hasMany(ProduitModel::class);
     }
 }
