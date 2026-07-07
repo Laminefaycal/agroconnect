@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('agriculteurs', function (Blueprint $table) {
             $table->uuid('id')->primary();
-             $table->uuid('produit_id')->foreignUuid()->references('id')->on('produits')->onDelete('cascade');
+            $table->uuid('produit_id')->foreignUuid()->references('id')->on('produits')->onDelete('cascade');
             $table->string('nom_exploitation');
             $table->string('email');
             $table->string('telephone')->nullable();

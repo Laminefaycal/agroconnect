@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ProduitModel extends Model
 {
     protected $table = 'produits';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -24,12 +26,10 @@ class ProduitModel extends Model
         'prix_unitaire' => 'decimal:2',
     ];
 
-
     public function agriculteur(): BelongsTo
     {
         return $this->belongsTo(AgriculteurModel::class);
     }
-
 
     public function estDisponible(int $quantite): bool
     {

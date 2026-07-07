@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class TransporteurModel extends Model
 {
     protected $table = 'transporteurs';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -21,7 +23,6 @@ class TransporteurModel extends Model
     protected $casts = [
         'id' => 'string',
     ];
-
 
     /**
      * Un transporteur peut effectuer plusieurs livraisons

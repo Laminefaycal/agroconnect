@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ConsommateurModel extends Model
 {
     protected $table = 'consommateurs';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -21,7 +23,6 @@ class ConsommateurModel extends Model
     protected $casts = [
         'id' => 'string',
     ];
-
 
     /**
      * Un consommateur peut passer plusieurs commandes

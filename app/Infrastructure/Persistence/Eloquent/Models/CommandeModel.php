@@ -14,7 +14,9 @@ use InvalidArgumentException;
 class CommandeModel extends Model
 {
     protected $table = 'commandes';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -28,7 +30,6 @@ class CommandeModel extends Model
     protected $casts = [
         'id' => 'string',
     ];
-
 
     public function consommateur(): BelongsTo
     {
@@ -44,7 +45,6 @@ class CommandeModel extends Model
     {
         return $this->hasOne(LivraisonModel::class);
     }
-
 
     /**
      * Valider la commande
@@ -81,7 +81,7 @@ class CommandeModel extends Model
         $livraison = $this->livraison;
 
         if ($livraison === null) {
-            $livraison = new LivraisonModel();
+            $livraison = new LivraisonModel;
             $livraison->id = uniqid();
             $livraison->commande_id = $this->id;
             $livraison->statut = StatutLivraison::ASSIGNEE;

@@ -10,6 +10,7 @@ class LigneCommandeModel extends Model
     protected $table = 'lignes_commande';
 
     protected $keyType = 'int';
+
     public $incrementing = true;
 
     protected $fillable = [
@@ -24,7 +25,6 @@ class LigneCommandeModel extends Model
         'quantite' => 'integer',
         'prix_unitaire' => 'decimal:2',
     ];
-
 
     public function commande(): BelongsTo
     {

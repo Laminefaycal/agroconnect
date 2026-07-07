@@ -10,7 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class LivraisonModel extends Model
 {
     protected $table = 'livraisons';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -31,7 +33,6 @@ class LivraisonModel extends Model
         'statut' => StatutLivraison::class,
     ];
 
-
     /**
      * Relation avec la Commande associée
      */
@@ -48,7 +49,6 @@ class LivraisonModel extends Model
         return $this->belongsTo(TransporteurModel::class);
     }
 
-
     /**
      * Met à jour le statut de la livraison
      */
@@ -64,7 +64,7 @@ class LivraisonModel extends Model
     public function confirmerLivraison(): void
     {
         $this->statut = StatutLivraison::LIVREE;
-        $this->date_livraison_effective = new DateTime();
+        $this->date_livraison_effective = new DateTime;
         $this->save();
     }
 }

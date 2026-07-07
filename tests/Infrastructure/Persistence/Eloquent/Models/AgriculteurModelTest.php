@@ -3,6 +3,7 @@
 namespace Test\Infrastructure\Persistence\Eloquent\Models;
 
 namespace App\Tests\Infrastructure\Persistence\Eloquent\Models;
+
 use App\Infrastructure\Persistence\Eloquent\Models\AgriculteurModel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;

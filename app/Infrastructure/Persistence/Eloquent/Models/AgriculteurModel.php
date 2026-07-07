@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class AgriculteurModel extends Model
 {
     protected $table = 'agriculteurs';
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -22,7 +24,6 @@ class AgriculteurModel extends Model
     protected $casts = [
         'id' => 'string',
     ];
-
 
     /**
      * Un agriculteur possède plusieurs produits dans son catalogue
